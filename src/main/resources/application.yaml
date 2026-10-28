@@ -1,10 +1,29 @@
 spring:
   application:
     name: Unnia
+  datasource:
+    url: ${UNNIA_DB_URL:jdbc:postgresql://localhost:5432/unnia}
+    username: ${UNNIA_DB_USER:unnia}
+    password: ${UNNIA_DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # o schema é gerenciado pelo Flyway; o Hibernate apenas confere se ele bate com as entidades
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
 
-# Administrador da plataforma, criado na inicialização se ainda não existir.
-# Em produção, defina as duas variáveis de ambiente; sem senha o seed é ignorado.
 unnia:
+  # Chave de assinatura dos tokens (mínimo de 32 caracteres). Defina UNNIA_JWT_SECRET em produção.
+  jwt:
+    secret: ${UNNIA_JWT_SECRET:}
+    expiration: PT2H
+  # Administrador da plataforma, criado na inicialização se ainda não existir.
+  # Em produção, defina as duas variáveis de ambiente; sem senha o seed é ignorado.
   admin:
     email: ${UNNIA_ADMIN_EMAIL:admin@unnia.com}
     password: ${UNNIA_ADMIN_PASSWORD:}
