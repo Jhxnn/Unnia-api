@@ -13,7 +13,10 @@ public interface NotificationRepository {
 
 	Optional<Notification> findById(NotificationId id);
 
+	/** Notificações do destinatário, da mais recente para a mais antiga. */
 	List<Notification> findByRecipient(AccountId recipientId, int page, int size);
+
+	List<Notification> findUnread(AccountId recipientId);
 
 	long countUnreadFor(AccountId recipientId);
 }

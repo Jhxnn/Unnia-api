@@ -14,7 +14,13 @@ public interface MessageRepository {
 
 	Optional<Message> findById(MessageId id);
 
+	/** Mensagens da conversa, da mais recente para a mais antiga. */
 	List<Message> findByConversation(ConversationId conversationId, int page, int size);
+
+	/** Mensagens da conversa ainda não lidas pelo destinatário. */
+	List<Message> findUnread(ConversationId conversationId, AccountId recipientId);
+
+	long countUnread(ConversationId conversationId, AccountId recipientId);
 
 	long countUnreadFor(AccountId recipientId);
 }
