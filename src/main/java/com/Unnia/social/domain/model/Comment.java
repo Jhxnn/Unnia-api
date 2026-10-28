@@ -61,6 +61,13 @@ public class Comment extends AggregateRoot<CommentId> {
 		raise(new CommentDeleted(id()));
 	}
 
+	/** Remoção por moderação: não exige ser o autor. */
+	public void removeByModerator() {
+		Guard.check(isActive(), "Comentário já removido");
+		status = ContentStatus.DELETED;
+		raise(new CommentDeleted(id()));
+	}
+
 	public boolean isActive() {
 		return status == ContentStatus.ACTIVE;
 	}

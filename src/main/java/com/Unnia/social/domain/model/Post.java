@@ -65,6 +65,13 @@ public class Post extends AggregateRoot<PostId> {
 		raise(new PostDeleted(id()));
 	}
 
+	/** Remoção por moderação: não exige ser o autor. */
+	public void removeByModerator() {
+		ensureActive();
+		status = ContentStatus.DELETED;
+		raise(new PostDeleted(id()));
+	}
+
 	public boolean isActive() {
 		return status == ContentStatus.ACTIVE;
 	}
