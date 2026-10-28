@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: Unnia
+
+# Administrador da plataforma, criado na inicialização se ainda não existir.
+# Em produção, defina as duas variáveis de ambiente; sem senha o seed é ignorado.
+unnia:
+  admin:
+    email: ${UNNIA_ADMIN_EMAIL:admin@unnia.com}
+    password: ${UNNIA_ADMIN_PASSWORD:}
