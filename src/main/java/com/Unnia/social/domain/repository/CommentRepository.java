@@ -13,5 +13,9 @@ public interface CommentRepository {
 
 	Optional<Comment> findById(CommentId id);
 
+	/** Comentários da postagem em ordem cronológica. */
 	List<Comment> findByPost(PostId postId);
+
+	/** Quantidade de comentários ativos (inclui respostas). */
+	long countActiveByPost(PostId postId);
 }
