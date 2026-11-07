@@ -1,6 +1,8 @@
 package com.Unnia.identity.infrastructure.security;
 
 import com.Unnia.identity.domain.repository.AccountRepository;
+import com.Unnia.shared.infrastructure.ratelimit.RateLimitPolicy;
+import com.Unnia.shared.infrastructure.ratelimit.RateLimiter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,10 +20,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 class SecurityConfig {
 
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwt, AccountRepository accounts)
-			throws Exception {
-		// instanciado aqui, e não como @Component, para rodar só dentro da cadeia do Spring Security
+	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwt, AccountRepository accounts,
+			RateLimiter rateLimiter, RateLimitPolicy rateLimitPolicy) throws Exception {
+		// instanciados aqui, e não como @Component, para rodar só dentro da cadeia do Spring Security
 		JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwt, accounts);
+		RateLimitFilter rateLimitFilter = new RateLimitFilter(rateLimiter, rateLimitPolicy, jwt);
 		http.csrf(AbstractHttpConfigurer::disable)
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.exceptionHandling(e -> e
@@ -40,6 +43,8 @@ class SecurityConfig {
 						.permitAll()
 						.requestMatchers("/api/admin/**").hasRole("ADMIN")
 						.anyRequest().authenticated())
+				// o limite vem primeiro, para recusar o excesso antes de qualquer consulta ao banco
+				.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
 				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}

@@ -122,3 +122,23 @@ Erros seguem o formato Problem Details: `400` entrada inválida, `401` não aute
 - Rascunhos só são visíveis para a ONG dona.
 - Conversas só existem entre uma ONG e um voluntário.
 - Suspender uma conta invalida seus tokens de acesso imediatamente: o filtro JWT confere a conta a cada requisição.
+
+## Limite de requisições
+
+Os contadores ficam em memória (token bucket, com cache limitado e expiração), atrás da porta `RateLimiter`:
+trocar por Redis para várias réplicas não exige mexer nas regras. Ao exceder, a API responde `429` com o
+cabeçalho `Retry-After` (segundos). Todas as respostas trazem `X-RateLimit-Limit` e `X-RateLimit-Remaining`.
+
+| Escopo | Limite padrão | Chave |
+|---|---|---|
+| Login, refresh, cadastros e troca de senha | 10 por minuto | IP |
+| Demais rotas | 120 por minuto | conta autenticada (ou IP, se anônimo) |
+| Falhas de login | 5 em 15 minutos | e-mail normalizado |
+
+- E-mail inexistente conta igual a senha errada, para não revelar quais contas existem.
+- O bloqueio por e-mail vale mesmo com a senha certa, até a janela acabar. Isso freia força bruta, mas
+  permite que alguém bloqueie temporariamente o login de uma conta alheia; é a troca consciente.
+- O IP é o `remoteAddr`. Atrás de um proxy reverso, configure `server.forward-headers-strategy`; ativá-lo
+  sem proxy permitiria forjar o IP e fugir do limite.
+- Configuração em `unnia.rate-limit.*` (`enabled`, `auth-per-minute`, `general-per-minute`,
+  `login-max-failures`, `login-window`).

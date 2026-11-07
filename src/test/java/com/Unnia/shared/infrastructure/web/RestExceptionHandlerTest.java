@@ -3,6 +3,7 @@ package com.Unnia.shared.infrastructure.web;
 import com.Unnia.shared.application.ConflictException;
 import com.Unnia.shared.application.ForbiddenException;
 import com.Unnia.shared.application.NotFoundException;
+import com.Unnia.shared.application.TooManyRequestsException;
 import com.Unnia.shared.application.UnauthorizedException;
 import com.Unnia.shared.domain.DomainException;
 import jakarta.validation.Valid;
@@ -21,10 +22,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -49,6 +52,11 @@ class RestExceptionHandlerTest {
 		@GetMapping("/unauthorized")
 		void unauthorized() {
 			throw new UnauthorizedException("Credenciais inválidas");
+		}
+
+		@GetMapping("/too-many")
+		void tooMany() {
+			throw new TooManyRequestsException("Muitas tentativas", Duration.ofSeconds(90));
 		}
 
 		@GetMapping("/forbidden")
@@ -97,6 +105,13 @@ class RestExceptionHandlerTest {
 		mvc.perform(get("/conflict")).andExpect(status().isConflict());
 		mvc.perform(get("/unauthorized")).andExpect(status().isUnauthorized());
 		mvc.perform(get("/forbidden")).andExpect(status().isForbidden());
+	}
+
+	@Test
+	void tooManyRequestsAnswers429WithRetryAfter() throws Exception {
+		mvc.perform(get("/too-many")).andExpect(status().isTooManyRequests())
+				.andExpect(header().string("Retry-After", "90"))
+				.andExpect(jsonPath("$.detail").value("Muitas tentativas"));
 	}
 
 	@Test

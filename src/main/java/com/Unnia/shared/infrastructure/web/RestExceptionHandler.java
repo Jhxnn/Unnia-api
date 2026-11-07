@@ -3,14 +3,17 @@ package com.Unnia.shared.infrastructure.web;
 import com.Unnia.shared.application.ConflictException;
 import com.Unnia.shared.application.ForbiddenException;
 import com.Unnia.shared.application.NotFoundException;
+import com.Unnia.shared.application.TooManyRequestsException;
 import com.Unnia.shared.application.UnauthorizedException;
 import com.Unnia.shared.domain.DomainException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -39,6 +42,14 @@ public class RestExceptionHandler {
 	@ExceptionHandler(UnauthorizedException.class)
 	ProblemDetail unauthorized(UnauthorizedException e) {
 		return problem(HttpStatus.UNAUTHORIZED, e.getMessage());
+	}
+
+	/** Excesso de tentativas (por exemplo, falhas de login): informa quanto esperar em {@code Retry-After}. */
+	@ExceptionHandler(TooManyRequestsException.class)
+	ResponseEntity<ProblemDetail> tooManyRequests(TooManyRequestsException e) {
+		long seconds = Math.max(1, (long) Math.ceil(e.retryAfter().toMillis() / 1000.0));
+		return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).header(HttpHeaders.RETRY_AFTER, String.valueOf(seconds))
+				.body(problem(HttpStatus.TOO_MANY_REQUESTS, e.getMessage()));
 	}
 
 	@ExceptionHandler(ForbiddenException.class)

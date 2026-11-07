@@ -25,6 +25,14 @@ unnia:
     expiration: PT15M
   refresh:
     expiration: P30D
+  # Limites de requisição, por minuto. As rotas de autenticação contam por IP; as demais por conta
+  # (ou por IP, se anônimo). Falhas de login também bloqueiam o e-mail por uma janela.
+  rate-limit:
+    enabled: true
+    auth-per-minute: 10
+    general-per-minute: 120
+    login-max-failures: 5
+    login-window: PT15M
   # Administrador da plataforma, criado na inicialização se ainda não existir.
   # Em produção, defina as duas variáveis de ambiente; sem senha o seed é ignorado.
   admin:
