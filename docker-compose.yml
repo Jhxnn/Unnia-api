@@ -1,6 +1,7 @@
 # Ambiente do Unnia.
 #   docker compose up -d                  sobe só o PostgreSQL (desenvolvimento: rode a API pela IDE ou pelo Maven)
-#   docker compose --profile app up -d    sobe também a API em contêiner (exige as variáveis abaixo)
+#   docker compose --profile app up -d    sobe também a API e o site (exige as variáveis abaixo); o site fica em http://localhost:8081
+#                                         e espera o repositório Unnia-front clonado como ../Unnia-web
 #   docker compose down                   para (os dados ficam no volume; use -v para apagá-los)
 # A porta do banco no host é 5433 para não colidir com outro PostgreSQL local na 5432.
 services:
@@ -37,6 +38,17 @@ services:
       UNNIA_ADMIN_PASSWORD: ${UNNIA_ADMIN_PASSWORD:?defina UNNIA_ADMIN_PASSWORD}
     ports:
       - "8080:8080"
+
+  web:
+    profiles: ["app"]
+    build: ../Unnia-web
+    container_name: unnia-web
+    depends_on:
+      - api
+    environment:
+      API_UPSTREAM: http://api:8080
+    ports:
+      - "8081:80"
 
 volumes:
   unnia-db-data:
