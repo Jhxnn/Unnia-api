@@ -6,6 +6,10 @@ import com.Unnia.identity.application.usecase.EndSessionUseCase;
 import com.Unnia.identity.application.usecase.RefreshSessionUseCase;
 import com.Unnia.identity.application.usecase.RegisterNgoUseCase;
 import com.Unnia.identity.application.usecase.RegisterVolunteerUseCase;
+import com.Unnia.identity.application.usecase.ResendEmailVerificationUseCase;
+import com.Unnia.identity.application.usecase.VerifyEmailUseCase;
+import com.Unnia.shared.application.ForbiddenException;
+import com.Unnia.shared.application.ServiceUnavailableException;
 import com.Unnia.identity.application.usecase.StartSessionUseCase;
 import com.Unnia.identity.domain.model.Role;
 import com.Unnia.identity.infrastructure.security.JwtService;
@@ -30,6 +34,7 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -48,6 +53,8 @@ class AuthControllerTest {
 	private StartSessionUseCase startSession;
 	private RefreshSessionUseCase refreshSession;
 	private EndSessionUseCase endSession;
+	private VerifyEmailUseCase verifyEmail;
+	private ResendEmailVerificationUseCase resendVerification;
 	private JwtService jwt;
 	private MockMvc mvc;
 
@@ -58,10 +65,13 @@ class AuthControllerTest {
 		startSession = mock(StartSessionUseCase.class);
 		refreshSession = mock(RefreshSessionUseCase.class);
 		endSession = mock(EndSessionUseCase.class);
+		verifyEmail = mock(VerifyEmailUseCase.class);
+		resendVerification = mock(ResendEmailVerificationUseCase.class);
 		jwt = new JwtService("a-secret-with-clearly-more-than-32-chars", Duration.ofMinutes(15),
 				new MutableClock(NOW));
 		AuthController controller = new AuthController(registerNgo, mock(RegisterVolunteerUseCase.class),
-				authenticate, mock(ChangePasswordUseCase.class), startSession, refreshSession, endSession, jwt);
+				authenticate, mock(ChangePasswordUseCase.class), startSession, refreshSession, endSession,
+				verifyEmail, resendVerification, jwt);
 
 		LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
 		validator.afterPropertiesSet();
@@ -75,6 +85,57 @@ class AuthControllerTest {
 			 "name":"Mãos Solidárias","description":"Ajudamos","city":"Recife"}""";
 
 	private static final String LOGIN_BODY = "{\"email\":\"vol@exemplo.com\",\"password\":\"senha1234\"}";
+
+	@Test
+	void verifyingTheEmailPassesTheTokenAndReturnsNoContent() throws Exception {
+		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"token\":\"abc123\"}")).andExpect(status().isNoContent());
+
+		verify(verifyEmail).execute(new VerifyEmailUseCase.Command("abc123"));
+	}
+
+	@Test
+	void anInvalidLinkBecomesUnprocessableEntityWithTheReason() throws Exception {
+		doThrow(new DomainException("Link de confirmação inválido ou expirado")).when(verifyEmail).execute(any());
+
+		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"token\":\"velho\"}")).andExpect(status().isUnprocessableEntity())
+				.andExpect(jsonPath("$.detail").value("Link de confirmação inválido ou expirado"));
+	}
+
+	@Test
+	void verifyingWithoutATokenIsABadRequest() throws Exception {
+		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON).content("{}"))
+				.andExpect(status().isBadRequest());
+
+		verify(verifyEmail, never()).execute(any());
+	}
+
+	@Test
+	void resendingAlwaysAnswersNoContent() throws Exception {
+		mvc.perform(post("/api/auth/resend-verification").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"email\":\"qualquer@exemplo.com\"}")).andExpect(status().isNoContent());
+
+		verify(resendVerification).execute(new ResendEmailVerificationUseCase.Command("qualquer@exemplo.com"));
+	}
+
+	@Test
+	void whenTheMailServerIsDownResendingReportsServiceUnavailable() throws Exception {
+		doThrow(new ServiceUnavailableException("Não foi possível enviar o e-mail agora.")).when(resendVerification)
+				.execute(any());
+
+		mvc.perform(post("/api/auth/resend-verification").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"email\":\"qualquer@exemplo.com\"}")).andExpect(status().isServiceUnavailable());
+	}
+
+	@Test
+	void loginWithAnUnconfirmedEmailIsForbiddenWithTheReason() throws Exception {
+		when(authenticate.execute(any())).thenThrow(new ForbiddenException(AuthenticateUseCase.EMAIL_NOT_VERIFIED));
+
+		mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(LOGIN_BODY))
+				.andExpect(status().isForbidden())
+				.andExpect(jsonPath("$.detail").value(AuthenticateUseCase.EMAIL_NOT_VERIFIED));
+	}
 
 	@Test
 	void registeringANgoReturnsCreatedWithPlainStringIds() throws Exception {

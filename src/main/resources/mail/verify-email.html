@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Confirme seu e-mail no Unnia</title>
+</head>
+<body style="margin:0;padding:0;background:#f2f4fb;">
+  <!-- texto de pré-visualização que aparece ao lado do assunto na caixa de entrada -->
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f2f4fb;">
+    Falta só um passo: confirme que este e-mail é seu para entrar no Unnia.
+  </div>
+
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f2f4fb;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+               style="max-width:560px;background:#ffffff;border:2px solid #0e1330;border-radius:16px;overflow:hidden;">
+
+          <!-- marca: a fileira de vagas, com a primeira já preenchida -->
+          <tr>
+            <td style="background:#0e1330;padding:22px 32px;">
+              <table role="presentation" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="padding-right:6px;"><div style="width:10px;height:26px;background:#ffd21f;border-radius:3px;font-size:0;line-height:0;">&nbsp;</div></td>
+                  <td style="padding-right:6px;"><div style="width:10px;height:26px;border:2px solid #7b86c4;border-radius:3px;box-sizing:border-box;font-size:0;line-height:0;">&nbsp;</div></td>
+                  <td style="padding-right:12px;"><div style="width:10px;height:26px;border:2px solid #7b86c4;border-radius:3px;box-sizing:border-box;font-size:0;line-height:0;">&nbsp;</div></td>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">Unnia</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:36px 32px 8px 32px;font-family:Arial,Helvetica,sans-serif;color:#0e1330;">
+              <h1 style="margin:0 0 16px 0;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.5px;">{{greeting}}</h1>
+              <p style="margin:0 0 12px 0;font-size:16px;line-height:1.55;">
+                Falta só um passo para entrar no Unnia: confirme que este e-mail é seu.
+              </p>
+              <p style="margin:0 0 28px 0;font-size:16px;line-height:1.55;color:#3a4166;">
+                Assim a gente sabe que os avisos dos eventos, as inscrições e as mensagens chegam na pessoa certa.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="left" style="padding:0 32px 28px 32px;">
+              <a href="{{link}}"
+                 style="display:inline-block;background:#2338d0;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:700;text-decoration:none;padding:15px 28px;border-radius:10px;border-bottom:4px solid #ffd21f;">
+                Confirmar meu e-mail
+              </a>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 32px 8px 32px;font-family:Arial,Helvetica,sans-serif;color:#3a4166;font-size:14px;line-height:1.55;">
+              <p style="margin:0 0 6px 0;">Se o botão não funcionar, copie e cole este endereço no navegador:</p>
+              <p style="margin:0 0 24px 0;word-break:break-all;"><a href="{{link}}" style="color:#2338d0;">{{link}}</a></p>
+              <p style="margin:0 0 6px 0;">
+                <strong style="color:#0e1330;">O link vale por {{hours}} horas</strong> e só pode ser usado uma vez.
+              </p>
+              <p style="margin:0 0 28px 0;">
+                Não criou uma conta no Unnia? Pode ignorar esta mensagem: nada será feito e ninguém entra na sua conta.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:20px 32px;border-top:1px solid #d9deef;background:#f2f4fb;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:#667094;">
+              Unnia · Conecta ONGs e voluntários em eventos solidários.<br>
+              Esta é uma mensagem automática; responder a ela não chega a ninguém.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -66,10 +66,39 @@ class AccountTest {
 	}
 
 	@Test
+	void newVolunteerAndNgoAccountsStartWithTheEmailUnconfirmed() {
+		assertThat(Account.register(EMAIL, HASH, Role.VOLUNTEER).isEmailVerified()).isFalse();
+		assertThat(Account.register(EMAIL, HASH, Role.NGO).isEmailVerified()).isFalse();
+	}
+
+	@Test
+	void theAdminIsCreatedByThePlatformSoItsEmailNeedsNoConfirmation() {
+		assertThat(Account.register(EMAIL, HASH, Role.ADMIN).isEmailVerified()).isTrue();
+	}
+
+	@Test
+	void verifyingTheEmailIsIdempotent() {
+		Account account = Account.register(EMAIL, HASH, Role.VOLUNTEER);
+
+		account.verifyEmail();
+		account.verifyEmail();
+
+		assertThat(account.isEmailVerified()).isTrue();
+	}
+
+	@Test
+	void restoredAccountKeepsItsConfirmationState() {
+		Account unconfirmed = Account.restore(Account.register(EMAIL, HASH, Role.NGO).id(), EMAIL, HASH, Role.NGO,
+				AccountStatus.ACTIVE, false);
+
+		assertThat(unconfirmed.isEmailVerified()).isFalse();
+	}
+
+	@Test
 	void restoredAccountRaisesNoEvents() {
 		Account original = Account.register(EMAIL, HASH, Role.NGO);
 
-		Account restored = Account.restore(original.id(), EMAIL, HASH, Role.NGO, AccountStatus.SUSPENDED);
+		Account restored = Account.restore(original.id(), EMAIL, HASH, Role.NGO, AccountStatus.SUSPENDED, true);
 
 		assertThat(restored).isEqualTo(original);
 		assertThat(restored.domainEvents()).isEmpty();

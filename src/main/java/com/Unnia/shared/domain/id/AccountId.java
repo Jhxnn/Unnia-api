@@ -5,7 +5,7 @@ import com.Unnia.shared.domain.DomainException;
 import com.Unnia.shared.domain.Guard;
 
 import java.util.UUID;
-
+	
 public record AccountId(UUID value) implements Identifier {
 
 	public AccountId {

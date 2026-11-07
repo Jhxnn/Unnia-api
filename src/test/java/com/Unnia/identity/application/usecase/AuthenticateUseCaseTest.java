@@ -9,6 +9,7 @@ import com.Unnia.identity.domain.model.Account;
 import com.Unnia.identity.domain.model.Email;
 import com.Unnia.identity.domain.model.PasswordHash;
 import com.Unnia.identity.domain.model.Role;
+import com.Unnia.shared.application.ForbiddenException;
 import com.Unnia.shared.application.TooManyRequestsException;
 import com.Unnia.shared.application.UnauthorizedException;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,11 +32,30 @@ class AuthenticateUseCaseTest {
 		useCase = new AuthenticateUseCase(accounts, new FakePasswordEncoder(), attempts);
 		account = accounts.save(Account.register(Email.of("maria@exemplo.com"), PasswordHash.of("enc:senha1234"),
 				Role.VOLUNTEER));
+		account.verifyEmail();
 	}
 
 	private void fail(String email) {
 		assertThatThrownBy(() -> useCase.execute(new Command(email, "errada1234")))
 				.isInstanceOf(UnauthorizedException.class);
+	}
+
+	@Test
+	void anUnconfirmedEmailCannotLogInEvenWithTheRightPassword() {
+		Account pending = accounts.save(Account.register(Email.of("nova@exemplo.com"), PasswordHash.of("enc:senha1234"),
+				Role.NGO));
+
+		assertThat(pending.isEmailVerified()).isFalse();
+		assertThatThrownBy(() -> useCase.execute(new Command("nova@exemplo.com", "senha1234")))
+				.isInstanceOf(ForbiddenException.class).hasMessage(AuthenticateUseCase.EMAIL_NOT_VERIFIED);
+	}
+
+	@Test
+	void theConfirmationWarningIsOnlyShownAfterTheRightPassword() {
+		accounts.save(Account.register(Email.of("nova@exemplo.com"), PasswordHash.of("enc:senha1234"), Role.NGO));
+
+		assertThatThrownBy(() -> useCase.execute(new Command("nova@exemplo.com", "errada1234")))
+				.isInstanceOf(UnauthorizedException.class).hasMessage("Credenciais inválidas");
 	}
 
 	@Test
@@ -116,6 +136,7 @@ class AuthenticateUseCaseTest {
 	void otherEmailsAreNotAffectedByTheBlock() {
 		Account other = accounts.save(Account.register(Email.of("joao@exemplo.com"), PasswordHash.of("enc:senha1234"),
 				Role.NGO));
+		other.verifyEmail();
 		fail("maria@exemplo.com");
 		fail("maria@exemplo.com");
 		fail("maria@exemplo.com");

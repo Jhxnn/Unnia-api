@@ -5,6 +5,8 @@ import com.Unnia.identity.application.usecase.ChangePasswordUseCase;
 import com.Unnia.identity.application.usecase.EndSessionUseCase;
 import com.Unnia.identity.application.usecase.RefreshSessionUseCase;
 import com.Unnia.identity.application.usecase.RegisterNgoUseCase;
+import com.Unnia.identity.application.usecase.ResendEmailVerificationUseCase;
+import com.Unnia.identity.application.usecase.VerifyEmailUseCase;
 import com.Unnia.identity.application.usecase.RegisterVolunteerUseCase;
 import com.Unnia.identity.application.usecase.StartSessionUseCase;
 import com.Unnia.identity.domain.model.Role;
@@ -49,6 +51,12 @@ class AuthController {
 	record RefreshRequest(@NotBlank String refreshToken) {
 	}
 
+	record VerifyEmailRequest(@NotBlank String token) {
+	}
+
+	record ResendVerificationRequest(@NotBlank String email) {
+	}
+
 	record ChangePasswordRequest(@NotBlank String currentPassword, @NotBlank String newPassword) {
 	}
 
@@ -70,11 +78,14 @@ class AuthController {
 	private final StartSessionUseCase startSession;
 	private final RefreshSessionUseCase refreshSession;
 	private final EndSessionUseCase endSession;
+	private final VerifyEmailUseCase verifyEmail;
+	private final ResendEmailVerificationUseCase resendVerification;
 	private final JwtService jwt;
 
 	AuthController(RegisterNgoUseCase registerNgo, RegisterVolunteerUseCase registerVolunteer,
 			AuthenticateUseCase authenticate, ChangePasswordUseCase changePassword, StartSessionUseCase startSession,
-			RefreshSessionUseCase refreshSession, EndSessionUseCase endSession, JwtService jwt) {
+			RefreshSessionUseCase refreshSession, EndSessionUseCase endSession, VerifyEmailUseCase verifyEmail,
+			ResendEmailVerificationUseCase resendVerification, JwtService jwt) {
 		this.registerNgo = registerNgo;
 		this.registerVolunteer = registerVolunteer;
 		this.authenticate = authenticate;
@@ -82,6 +93,8 @@ class AuthController {
 		this.startSession = startSession;
 		this.refreshSession = refreshSession;
 		this.endSession = endSession;
+		this.verifyEmail = verifyEmail;
+		this.resendVerification = resendVerification;
 		this.jwt = jwt;
 	}
 
@@ -99,6 +112,20 @@ class AuthController {
 		var result = registerVolunteer.execute(new RegisterVolunteerUseCase.Command(request.email(),
 				request.password(), request.name(), request.bio(), request.city()));
 		return new VolunteerRegistered(result.accountId(), result.volunteerId());
+	}
+
+	/** Confirma o e-mail com o token do link recebido. Abrir o mesmo link de novo também responde 204. */
+	@PostMapping("/verify-email")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+		verifyEmail.execute(new VerifyEmailUseCase.Command(request.token()));
+	}
+
+	/** Reenvia o link. Responde 204 exista a conta ou não, para não revelar quais e-mails estão cadastrados. */
+	@PostMapping("/resend-verification")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+		resendVerification.execute(new ResendEmailVerificationUseCase.Command(request.email()));
 	}
 
 	@PostMapping("/login")

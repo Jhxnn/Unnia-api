@@ -6,6 +6,7 @@ import com.Unnia.identity.domain.model.Account;
 import com.Unnia.identity.domain.model.Email;
 import com.Unnia.identity.domain.model.Role;
 import com.Unnia.identity.domain.repository.AccountRepository;
+import com.Unnia.shared.application.ForbiddenException;
 import com.Unnia.shared.application.TooManyRequestsException;
 import com.Unnia.shared.application.UnauthorizedException;
 import com.Unnia.shared.domain.DomainException;
@@ -16,6 +17,8 @@ import java.util.Locale;
 public class AuthenticateUseCase {
 
 	private static final String INVALID_CREDENTIALS = "Credenciais inválidas";
+	/** Só aparece depois de a senha estar certa, então não revela contas a quem não as conhece. */
+	public static final String EMAIL_NOT_VERIFIED = "Confirme seu e-mail para entrar. Enviamos um link para a sua caixa de entrada.";
 	private static final int MAX_KEY_LENGTH = 254;
 
 	public record Command(String email, String password) {
@@ -55,6 +58,9 @@ public class AuthenticateUseCase {
 
 		if (!account.isActive()) {
 			throw new UnauthorizedException("Conta suspensa");
+		}
+		if (!account.isEmailVerified()) {
+			throw new ForbiddenException(EMAIL_NOT_VERIFIED);
 		}
 		return new Result(account.id(), account.role());
 	}

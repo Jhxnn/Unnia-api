@@ -26,12 +26,13 @@ final class IdentityMapper {
 		entity.passwordHash = account.passwordHash().value();
 		entity.role = account.role();
 		entity.status = account.status();
+		entity.emailVerified = account.isEmailVerified();
 		return entity;
 	}
 
 	static Account toDomain(AccountEntity entity) {
 		return Account.restore(new AccountId(entity.id), Email.of(entity.email), PasswordHash.of(entity.passwordHash),
-				entity.role, entity.status);
+				entity.role, entity.status, entity.emailVerified);
 	}
 
 	static NgoProfileEntity toEntity(NgoProfile profile) {

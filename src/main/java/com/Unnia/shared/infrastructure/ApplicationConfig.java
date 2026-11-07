@@ -10,6 +10,13 @@ import com.Unnia.messaging.application.Notifier;
 import com.Unnia.messaging.domain.repository.NotificationRepository;
 import com.Unnia.moderation.application.ModeratorPolicy;
 import com.Unnia.moderation.application.port.ModeratorDirectory;
+import com.Unnia.identity.application.EmailVerificationIssuer;
+import com.Unnia.identity.application.port.TokenGenerator;
+import com.Unnia.identity.application.port.TokenHasher;
+import com.Unnia.identity.application.port.VerificationEmailSender;
+import com.Unnia.identity.domain.repository.EmailVerificationTokenRepository;
+import com.Unnia.identity.domain.repository.NgoProfileRepository;
+import com.Unnia.identity.domain.repository.VolunteerProfileRepository;
 import com.Unnia.social.application.PostViews;
 import com.Unnia.social.application.port.AuthorDirectory;
 import com.Unnia.social.domain.repository.CommentRepository;
@@ -47,6 +54,13 @@ class ApplicationConfig {
 	@Bean
 	SessionPolicy sessionPolicy(@Value("${unnia.refresh.expiration:P30D}") Duration refreshTokenTtl) {
 		return new SessionPolicy(refreshTokenTtl);
+	}
+
+	@Bean
+	EmailVerificationIssuer emailVerificationIssuer(EmailVerificationTokenRepository tokens, TokenGenerator generator,
+			TokenHasher hasher, VerificationEmailSender sender, NgoProfileRepository ngos,
+			VolunteerProfileRepository volunteers, Clock clock) {
+		return new EmailVerificationIssuer(tokens, generator, hasher, sender, ngos, volunteers, clock);
 	}
 
 	@Bean

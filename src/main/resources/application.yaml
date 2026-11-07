@@ -16,8 +16,28 @@ spring:
           time_zone: UTC
   flyway:
     enabled: true
+  # Servidor SMTP do e-mail de confirmação. Em desenvolvimento, o Mailpit do docker-compose recebe as
+  # mensagens (caixa em http://localhost:8025). Em produção, aponte para o provedor real.
+  mail:
+    host: ${UNNIA_MAIL_HOST:localhost}
+    port: ${UNNIA_MAIL_PORT:1025}
+    username: ${UNNIA_MAIL_USER:}
+    password: ${UNNIA_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${UNNIA_MAIL_AUTH:false}
+          starttls:
+            enable: ${UNNIA_MAIL_STARTTLS:false}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
 unnia:
+  # Endereço público do site, usado nos links dos e-mails (/verificar-email?token=...).
+  public-url: ${UNNIA_PUBLIC_URL:http://localhost:5173}
+  mail:
+    from: ${UNNIA_MAIL_FROM:Unnia <nao-responda@unnia.local>}
   # Chave de assinatura dos tokens (mínimo de 32 caracteres). Defina UNNIA_JWT_SECRET em produção.
   jwt:
     secret: ${UNNIA_JWT_SECRET:}

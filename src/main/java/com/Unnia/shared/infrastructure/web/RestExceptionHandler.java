@@ -3,6 +3,7 @@ package com.Unnia.shared.infrastructure.web;
 import com.Unnia.shared.application.ConflictException;
 import com.Unnia.shared.application.ForbiddenException;
 import com.Unnia.shared.application.NotFoundException;
+import com.Unnia.shared.application.ServiceUnavailableException;
 import com.Unnia.shared.application.TooManyRequestsException;
 import com.Unnia.shared.application.UnauthorizedException;
 import com.Unnia.shared.domain.DomainException;
@@ -50,6 +51,11 @@ public class RestExceptionHandler {
 		long seconds = Math.max(1, (long) Math.ceil(e.retryAfter().toMillis() / 1000.0));
 		return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).header(HttpHeaders.RETRY_AFTER, String.valueOf(seconds))
 				.body(problem(HttpStatus.TOO_MANY_REQUESTS, e.getMessage()));
+	}
+
+	@ExceptionHandler(ServiceUnavailableException.class)
+	ProblemDetail serviceUnavailable(ServiceUnavailableException e) {
+		return problem(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
 	}
 
 	@ExceptionHandler(ForbiddenException.class)

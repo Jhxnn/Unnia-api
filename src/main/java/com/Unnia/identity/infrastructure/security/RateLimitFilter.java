@@ -26,7 +26,8 @@ import java.util.Set;
 class RateLimitFilter extends OncePerRequestFilter {
 
 	private static final Set<String> AUTH_POSTS = Set.of("/api/auth/login", "/api/auth/refresh",
-			"/api/auth/register/ngo", "/api/auth/register/volunteer");
+			"/api/auth/register/ngo", "/api/auth/register/volunteer", "/api/auth/verify-email",
+			"/api/auth/resend-verification");
 	private static final String AUTH_PASSWORD = "/api/auth/password";
 	private static final String BEARER = "Bearer ";
 

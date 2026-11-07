@@ -32,6 +32,9 @@ class AccountEntity {
 	@Column(nullable = false, length = 20)
 	AccountStatus status;
 
+	@Column(name = "email_verified", nullable = false)
+	boolean emailVerified;
+
 	protected AccountEntity() {
 	}
 }
