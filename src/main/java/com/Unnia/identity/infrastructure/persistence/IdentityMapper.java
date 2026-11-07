@@ -9,7 +9,9 @@ import com.Unnia.identity.domain.model.VolunteerProfile;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
 import com.Unnia.shared.domain.id.VolunteerId;
+import com.Unnia.shared.domain.vo.Cep;
 import com.Unnia.shared.domain.vo.City;
+import com.Unnia.shared.domain.vo.StateCode;
 import com.Unnia.shared.domain.vo.Description;
 import com.Unnia.shared.domain.vo.DisplayName;
 
@@ -43,6 +45,8 @@ final class IdentityMapper {
 		entity.name = profile.name().value();
 		entity.description = profile.description().value();
 		entity.city = profile.city().value();
+		entity.state = profile.state().map(StateCode::value).orElse(null);
+		entity.cep = profile.cep().map(Cep::value).orElse(null);
 		entity.verificationStatus = profile.verificationStatus();
 		return entity;
 	}
@@ -50,7 +54,7 @@ final class IdentityMapper {
 	static NgoProfile toDomain(NgoProfileEntity entity) {
 		return NgoProfile.restore(new NgoId(entity.id), new AccountId(entity.accountId), Cnpj.of(entity.cnpj),
 				DisplayName.of(entity.name), Description.of(entity.description), City.of(entity.city),
-				entity.verificationStatus);
+				StateCode.ofNullable(entity.state), Cep.ofNullable(entity.cep), entity.verificationStatus);
 	}
 
 	static VolunteerProfileEntity toEntity(VolunteerProfile profile) {
@@ -60,11 +64,14 @@ final class IdentityMapper {
 		entity.name = profile.name().value();
 		entity.bio = profile.bio().value();
 		entity.city = profile.city().value();
+		entity.state = profile.state().map(StateCode::value).orElse(null);
+		entity.cep = profile.cep().map(Cep::value).orElse(null);
 		return entity;
 	}
 
 	static VolunteerProfile toDomain(VolunteerProfileEntity entity) {
 		return VolunteerProfile.restore(new VolunteerId(entity.id), new AccountId(entity.accountId),
-				DisplayName.of(entity.name), Description.of(entity.bio), City.of(entity.city));
+				DisplayName.of(entity.name), Description.of(entity.bio), City.of(entity.city),
+				StateCode.ofNullable(entity.state), Cep.ofNullable(entity.cep));
 	}
 }

@@ -38,11 +38,11 @@ import java.time.Instant;
 class AuthController {
 
 	record RegisterNgoRequest(@NotBlank @Email String email, @NotBlank String password, @NotBlank String cnpj,
-			@NotBlank String name, String description, @NotBlank String city) {
+			@NotBlank String name, String description, @NotBlank String city, String state, String cep) {
 	}
 
 	record RegisterVolunteerRequest(@NotBlank @Email String email, @NotBlank String password,
-			@NotBlank String name, String bio, @NotBlank String city) {
+			@NotBlank String name, String bio, @NotBlank String city, String state, String cep) {
 	}
 
 	record LoginRequest(@NotBlank String email, @NotBlank String password) {
@@ -102,7 +102,7 @@ class AuthController {
 	@ResponseStatus(HttpStatus.CREATED)
 	NgoRegistered registerNgo(@Valid @RequestBody RegisterNgoRequest request) {
 		var result = registerNgo.execute(new RegisterNgoUseCase.Command(request.email(), request.password(),
-				request.cnpj(), request.name(), request.description(), request.city()));
+				request.cnpj(), request.name(), request.description(), request.city(), request.state(), request.cep()));
 		return new NgoRegistered(result.accountId(), result.ngoId());
 	}
 
@@ -110,7 +110,7 @@ class AuthController {
 	@ResponseStatus(HttpStatus.CREATED)
 	VolunteerRegistered registerVolunteer(@Valid @RequestBody RegisterVolunteerRequest request) {
 		var result = registerVolunteer.execute(new RegisterVolunteerUseCase.Command(request.email(),
-				request.password(), request.name(), request.bio(), request.city()));
+				request.password(), request.name(), request.bio(), request.city(), request.state(), request.cep()));
 		return new VolunteerRegistered(result.accountId(), result.volunteerId());
 	}
 

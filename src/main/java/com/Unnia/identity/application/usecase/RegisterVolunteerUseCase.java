@@ -12,13 +12,21 @@ import com.Unnia.shared.application.ConflictException;
 import com.Unnia.shared.application.DomainEventPublisher;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.VolunteerId;
+import com.Unnia.shared.domain.vo.Cep;
 import com.Unnia.shared.domain.vo.City;
+import com.Unnia.shared.domain.vo.StateCode;
 import com.Unnia.shared.domain.vo.Description;
 import com.Unnia.shared.domain.vo.DisplayName;
 
 public class RegisterVolunteerUseCase {
 
-	public record Command(String email, String password, String name, String bio, String city) {
+	public record Command(String email, String password, String name, String bio, String city, String state,
+			String cep) {
+
+		/** Sem estado nem CEP (ambos são opcionais). */
+		public Command(String email, String password, String name, String bio, String city) {
+			this(email, password, name, bio, city, null, null);
+		}
 	}
 
 	public record Result(AccountId accountId, VolunteerId volunteerId) {
@@ -47,7 +55,8 @@ public class RegisterVolunteerUseCase {
 
 		Account account = Account.register(email, passwordEncoder.encode(password), Role.VOLUNTEER);
 		VolunteerProfile profile = VolunteerProfile.create(account, DisplayName.of(command.name()),
-				Description.of(command.bio()), City.of(command.city()));
+				Description.of(command.bio()), City.of(command.city()), StateCode.ofNullable(command.state()),
+				Cep.ofNullable(command.cep()));
 
 		accounts.save(account);
 		volunteers.save(profile);

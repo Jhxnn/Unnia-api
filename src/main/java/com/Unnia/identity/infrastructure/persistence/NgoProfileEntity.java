@@ -32,6 +32,12 @@ class NgoProfileEntity {
 	@Column(nullable = false, length = 80)
 	String city;
 
+	@Column(length = 2)
+	String state;
+
+	@Column(length = 8)
+	String cep;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "verification_status", nullable = false, length = 20)
 	VerificationStatus verificationStatus;

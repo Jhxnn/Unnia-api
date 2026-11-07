@@ -48,11 +48,11 @@ import java.util.UUID;
 class EventController {
 
 	record CreateEventRequest(@NotBlank String title, String description, @NotBlank String address,
-			@NotBlank String city, @NotNull Instant start, @NotNull Instant end, @Min(1) int capacity) {
+			@NotBlank String city, String state, String cep, @NotNull Instant start, @NotNull Instant end, @Min(1) int capacity) {
 	}
 
 	record UpdateEventRequest(@NotBlank String title, String description, @NotBlank String address,
-			@NotBlank String city) {
+			@NotBlank String city, String state, String cep) {
 	}
 
 	record RescheduleRequest(@NotNull Instant start, @NotNull Instant end) {
@@ -107,7 +107,8 @@ class EventController {
 	@ResponseStatus(HttpStatus.CREATED)
 	Created create(@AuthenticationPrincipal AuthenticatedUser user, @Valid @RequestBody CreateEventRequest request) {
 		return new Created(create.execute(new CreateEventUseCase.Command(user.accountId(), request.title(),
-				request.description(), request.address(), request.city(), request.start(), request.end(),
+				request.description(), request.address(), request.city(), request.state(), request.cep(), request.start(),
+				request.end(),
 				request.capacity())));
 	}
 
@@ -138,7 +139,7 @@ class EventController {
 	void update(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID id,
 			@Valid @RequestBody UpdateEventRequest request) {
 		update.execute(new UpdateEventDetailsUseCase.Command(user.accountId(), new EventId(id), request.title(),
-				request.description(), request.address(), request.city()));
+				request.description(), request.address(), request.city(), request.state(), request.cep()));
 	}
 
 	@PutMapping("/{id}/schedule")

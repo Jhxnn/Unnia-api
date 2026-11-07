@@ -43,6 +43,12 @@ class EventEntity {
 	@Column(nullable = false, length = 80)
 	String city;
 
+	@Column(length = 2)
+	String state;
+
+	@Column(length = 8)
+	String cep;
+
 	@Column(name = "starts_at", nullable = false)
 	Instant startsAt;
 

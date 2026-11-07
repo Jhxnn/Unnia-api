@@ -26,6 +26,12 @@ class VolunteerProfileEntity {
 	@Column(nullable = false, length = 80)
 	String city;
 
+	@Column(length = 2)
+	String state;
+
+	@Column(length = 8)
+	String cep;
+
 	protected VolunteerProfileEntity() {
 	}
 }

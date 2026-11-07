@@ -12,7 +12,9 @@ import com.Unnia.shared.application.ForbiddenException;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.EventId;
 import com.Unnia.shared.domain.id.NgoId;
+import com.Unnia.shared.domain.vo.Cep;
 import com.Unnia.shared.domain.vo.City;
+import com.Unnia.shared.domain.vo.StateCode;
 import com.Unnia.shared.domain.vo.Description;
 
 import java.time.Clock;
@@ -21,7 +23,13 @@ import java.time.Instant;
 public class CreateEventUseCase {
 
 	public record Command(AccountId accountId, String title, String description, String address, String city,
-			Instant start, Instant end, int capacity) {
+			String state, String cep, Instant start, Instant end, int capacity) {
+
+		/** Sem estado nem CEP (ambos são opcionais). */
+		public Command(AccountId accountId, String title, String description, String address, String city,
+				Instant start, Instant end, int capacity) {
+			this(accountId, title, description, address, city, null, null, start, end, capacity);
+		}
 	}
 
 	private final NgoDirectory ngos;
@@ -42,7 +50,8 @@ public class CreateEventUseCase {
 				.orElseThrow(() -> new ForbiddenException("Somente ONGs podem criar eventos"));
 
 		Event event = Event.create(ownerId, EventTitle.of(command.title()), Description.of(command.description()),
-				Location.of(command.address(), City.of(command.city())), Period.of(command.start(), command.end()),
+				Location.of(command.address(), City.of(command.city()), StateCode.ofNullable(command.state()),
+						Cep.ofNullable(command.cep())), Period.of(command.start(), command.end()),
 				Capacity.of(command.capacity()), clock.instant());
 
 		events.save(event);

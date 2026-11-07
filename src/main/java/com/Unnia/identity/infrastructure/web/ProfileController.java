@@ -29,10 +29,12 @@ import java.util.UUID;
 @RestController
 class ProfileController {
 
-	record UpdateNgoRequest(@NotBlank String name, String description, @NotBlank String city) {
+	record UpdateNgoRequest(@NotBlank String name, String description, @NotBlank String city, String state,
+			String cep) {
 	}
 
-	record UpdateVolunteerRequest(@NotBlank String name, String bio, @NotBlank String city) {
+	record UpdateVolunteerRequest(@NotBlank String name, String bio, @NotBlank String city, String state,
+			String cep) {
 	}
 
 	private final GetCurrentAccountUseCase getCurrentAccount;
@@ -81,7 +83,7 @@ class ProfileController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	void updateNgo(@AuthenticationPrincipal AuthenticatedUser user, @Valid @RequestBody UpdateNgoRequest request) {
 		updateNgo.execute(new UpdateNgoProfileUseCase.Command(user.accountId(), request.name(),
-				request.description(), request.city()));
+				request.description(), request.city(), request.state(), request.cep()));
 	}
 
 	@PutMapping("/api/volunteers/me")
@@ -89,6 +91,6 @@ class ProfileController {
 	void updateVolunteer(@AuthenticationPrincipal AuthenticatedUser user,
 			@Valid @RequestBody UpdateVolunteerRequest request) {
 		updateVolunteer.execute(new UpdateVolunteerProfileUseCase.Command(user.accountId(), request.name(),
-				request.bio(), request.city()));
+				request.bio(), request.city(), request.state(), request.cep()));
 	}
 }

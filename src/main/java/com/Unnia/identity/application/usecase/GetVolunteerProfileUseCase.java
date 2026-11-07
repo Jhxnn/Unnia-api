@@ -5,10 +5,13 @@ import com.Unnia.identity.domain.repository.VolunteerProfileRepository;
 import com.Unnia.shared.application.NotFoundException;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.VolunteerId;
+import com.Unnia.shared.domain.vo.Cep;
+import com.Unnia.shared.domain.vo.StateCode;
 
 public class GetVolunteerProfileUseCase {
 
-	public record View(VolunteerId volunteerId, AccountId accountId, String name, String bio, String city) {
+	public record View(VolunteerId volunteerId, AccountId accountId, String name, String bio, String city, String state,
+			String cep) {
 	}
 
 	private final VolunteerProfileRepository volunteers;
@@ -20,6 +23,8 @@ public class GetVolunteerProfileUseCase {
 	public View execute(VolunteerId volunteerId) {
 		VolunteerProfile profile = volunteers.findById(volunteerId)
 				.orElseThrow(() -> new NotFoundException("Voluntário não encontrado"));
-		return new View(profile.id(), profile.accountId(), profile.name().value(), profile.bio().value(), profile.city().value());
+		return new View(profile.id(), profile.accountId(), profile.name().value(), profile.bio().value(),
+				profile.city().value(), profile.state().map(StateCode::value).orElse(null),
+				profile.cep().map(Cep::formatted).orElse(null));
 	}
 }

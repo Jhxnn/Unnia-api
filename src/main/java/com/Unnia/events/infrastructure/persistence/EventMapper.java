@@ -10,7 +10,9 @@ import com.Unnia.events.domain.model.RegistrationId;
 import com.Unnia.shared.domain.id.EventId;
 import com.Unnia.shared.domain.id.NgoId;
 import com.Unnia.shared.domain.id.VolunteerId;
+import com.Unnia.shared.domain.vo.Cep;
 import com.Unnia.shared.domain.vo.City;
+import com.Unnia.shared.domain.vo.StateCode;
 import com.Unnia.shared.domain.vo.Description;
 
 import java.util.HashMap;
@@ -33,6 +35,8 @@ final class EventMapper {
 		entity.description = event.description().value();
 		entity.address = event.location().address();
 		entity.city = event.location().city().value();
+		entity.state = event.location().state() == null ? null : event.location().state().value();
+		entity.cep = event.location().cep() == null ? null : event.location().cep().value();
 		entity.startsAt = event.period().start();
 		entity.endsAt = event.period().end();
 		entity.capacity = event.capacity().max();
@@ -55,7 +59,8 @@ final class EventMapper {
 
 	static Event toDomain(EventEntity entity) {
 		return Event.restore(new EventId(entity.id), new NgoId(entity.ownerId), EventTitle.of(entity.title),
-				Description.of(entity.description), Location.of(entity.address, City.of(entity.city)),
+				Description.of(entity.description), Location.of(entity.address, City.of(entity.city), StateCode.ofNullable(entity.state),
+						Cep.ofNullable(entity.cep)),
 				Period.of(entity.startsAt, entity.endsAt), Capacity.of(entity.capacity), entity.status,
 				entity.registrations.stream().map(EventMapper::toDomain).toList());
 	}

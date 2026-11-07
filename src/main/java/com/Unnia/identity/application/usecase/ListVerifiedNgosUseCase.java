@@ -6,6 +6,7 @@ import com.Unnia.identity.domain.repository.NgoProfileRepository;
 import com.Unnia.shared.domain.Guard;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
+import com.Unnia.shared.domain.vo.StateCode;
 
 import java.util.List;
 
@@ -14,7 +15,8 @@ public class ListVerifiedNgosUseCase {
 
 	public static final int MAX_PAGE_SIZE = 50;
 
-	public record NgoCard(NgoId ngoId, AccountId accountId, String name, String description, String city) {
+	public record NgoCard(NgoId ngoId, AccountId accountId, String name, String description, String city,
+			String state) {
 	}
 
 	private final NgoProfileRepository ngos;
@@ -32,6 +34,7 @@ public class ListVerifiedNgosUseCase {
 
 	private static NgoCard toCard(NgoProfile profile) {
 		return new NgoCard(profile.id(), profile.accountId(), profile.name().value(), profile.description().value(),
-				profile.city().value());
+				profile.city().value(),
+				profile.state().map(StateCode::value).orElse(null));
 	}
 }

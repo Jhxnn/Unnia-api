@@ -104,7 +104,7 @@ As durações são configuráveis em `unnia.jwt.expiration` e `unnia.refresh.exp
 
 | Área | Rotas |
 |---|---|
-| Auth | `POST /api/auth/register/ngo`, `/register/volunteer`, `/login`, `/refresh`, `/logout`; `PUT /api/auth/password` |
+| Auth | `POST /api/auth/register/ngo`, `/register/volunteer`, `/login`, `/refresh`, `/logout`, `/verify-email`, `/resend-verification`; `PUT /api/auth/password` |
 | Perfis | `GET /api/me`, `/api/ngos` (vitrine das ONGs verificadas), `/api/ngos/{id}`, `/api/volunteers/{id}`; `PUT /api/ngos/me`, `/api/volunteers/me` |
 | Eventos | `POST/GET /api/events`, `GET /api/events/{id}`, `/mine`, `/registered`; `PUT /{id}`, `/{id}/schedule`, `/{id}/capacity`; `POST /{id}/publish`, `/cancel`, `/finish`, `/registrations`, `/attendance/{volunteerId}`; `DELETE /{id}/registrations`; `GET /{id}/registrations` (inscritos, só a ONG dona) |
 | Social | `POST /api/posts`, `GET /api/posts/feed`, `/{id}`, `/author/{accountId}`, `/{id}/comments`; `PUT/DELETE /api/posts/{id}`; `POST /api/comments/{id}/replies`; `PUT/DELETE /api/reactions`; `GET/POST/DELETE /api/follows/{accountId}` (status, seguir, deixar de seguir). Posts e comentários trazem o autor (nome e papel) e a reação de quem consulta |
@@ -112,6 +112,10 @@ As durações são configuráveis em `unnia.jwt.expiration` e `unnia.refresh.exp
 | Notificações | `GET /api/notifications`, `/unread-count`; `POST /api/notifications/{id}/read`, `/read-all` |
 | Moderação | `POST /api/reports`; `GET /api/admin/reports` (com resumo do alvo); `POST /api/admin/reports/{id}/resolve`, `/dismiss` |
 | Admin | `GET /api/admin/ngos?status=PENDING` (fila de revisão); `POST /api/admin/ngos/{id}/verify`, `/reject`; `POST /api/admin/accounts/{id}/suspend`, `/activate` |
+
+Endereço: eventos e perfis aceitam `state` (sigla da UF) e `cep` opcionais, validados quando enviados; nas atualizações, campo ausente mantém o valor e campo em branco limpa. O front preenche cidade, estado e rua a partir do CEP pelo ViaCEP, no navegador.
+
+Confirmação de e-mail: o cadastro de voluntário ou ONG envia um link (vale 24 h, uso único) para o e-mail; o login só funciona depois de confirmá-lo (`403` antes disso). `POST /api/auth/verify-email` confirma e `POST /api/auth/resend-verification` reenvia (resposta igual exista a conta ou não; 1 minuto entre envios). Em desenvolvimento o Mailpit do docker-compose guarda as mensagens em http://localhost:8025. Em produção, configure `UNNIA_MAIL_HOST`, `UNNIA_MAIL_PORT`, `UNNIA_MAIL_USER`, `UNNIA_MAIL_PASSWORD`, `UNNIA_MAIL_AUTH`, `UNNIA_MAIL_STARTTLS`, `UNNIA_MAIL_FROM` e `UNNIA_PUBLIC_URL` (endereço do site, usado no link).
 
 Erros seguem o formato Problem Details: `400` entrada inválida, `401` não autenticado, `403` sem permissão,
 `404` não encontrado, `409` conflito (inclusive concorrência) e `422` regra de negócio violada.

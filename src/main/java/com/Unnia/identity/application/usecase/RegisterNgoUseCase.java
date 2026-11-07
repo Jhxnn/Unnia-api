@@ -13,14 +13,21 @@ import com.Unnia.shared.application.ConflictException;
 import com.Unnia.shared.application.DomainEventPublisher;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
+import com.Unnia.shared.domain.vo.Cep;
 import com.Unnia.shared.domain.vo.City;
+import com.Unnia.shared.domain.vo.StateCode;
 import com.Unnia.shared.domain.vo.Description;
 import com.Unnia.shared.domain.vo.DisplayName;
 
 public class RegisterNgoUseCase {
 
 	public record Command(String email, String password, String cnpj, String name, String description,
-			String city) {
+			String city, String state, String cep) {
+
+		/** Sem estado nem CEP (ambos são opcionais). */
+		public Command(String email, String password, String cnpj, String name, String description, String city) {
+			this(email, password, cnpj, name, description, city, null, null);
+		}
 	}
 
 	public record Result(AccountId accountId, NgoId ngoId) {
@@ -53,7 +60,8 @@ public class RegisterNgoUseCase {
 
 		Account account = Account.register(email, passwordEncoder.encode(password), Role.NGO);
 		NgoProfile profile = NgoProfile.create(account, cnpj, DisplayName.of(command.name()),
-				Description.of(command.description()), City.of(command.city()));
+				Description.of(command.description()), City.of(command.city()),
+				StateCode.ofNullable(command.state()), Cep.ofNullable(command.cep()));
 
 		accounts.save(account);
 		ngos.save(profile);

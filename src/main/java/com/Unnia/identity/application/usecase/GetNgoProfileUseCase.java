@@ -6,10 +6,12 @@ import com.Unnia.identity.domain.repository.NgoProfileRepository;
 import com.Unnia.shared.application.NotFoundException;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
+import com.Unnia.shared.domain.vo.Cep;
+import com.Unnia.shared.domain.vo.StateCode;
 
 public class GetNgoProfileUseCase {
 
-	public record View(NgoId ngoId, AccountId accountId, String name, String cnpj, String description, String city,
+	public record View(NgoId ngoId, AccountId accountId, String name, String cnpj, String description, String city, String state, String cep,
 			VerificationStatus verificationStatus) {
 	}
 
@@ -23,6 +25,8 @@ public class GetNgoProfileUseCase {
 		NgoProfile profile = ngos.findById(ngoId)
 				.orElseThrow(() -> new NotFoundException("ONG não encontrada"));
 		return new View(profile.id(), profile.accountId(), profile.name().value(), profile.cnpj().formatted(),
-				profile.description().value(), profile.city().value(), profile.verificationStatus());
+				profile.description().value(), profile.city().value(),
+				profile.state().map(StateCode::value).orElse(null),
+				profile.cep().map(Cep::formatted).orElse(null), profile.verificationStatus());
 	}
 }
