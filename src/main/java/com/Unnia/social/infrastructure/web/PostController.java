@@ -100,13 +100,13 @@ class PostController {
 	}
 
 	@GetMapping("/author/{accountId}")
-	List<PostView> byAuthor(@PathVariable UUID accountId) {
-		return byAuthor.execute(new AccountId(accountId));
+	List<PostView> byAuthor(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID accountId) {
+		return byAuthor.execute(new AccountId(accountId), user.accountId());
 	}
 
 	@GetMapping("/{id}")
-	PostView byId(@PathVariable UUID id) {
-		return get.execute(new PostId(id));
+	PostView byId(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID id) {
+		return get.execute(new PostId(id), user.accountId());
 	}
 
 	@PutMapping("/{id}")

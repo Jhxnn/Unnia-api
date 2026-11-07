@@ -5,6 +5,7 @@ import com.Unnia.identity.infrastructure.security.AuthenticatedUser;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.social.application.usecase.DeleteCommentUseCase;
 import com.Unnia.social.application.usecase.FollowAccountUseCase;
+import com.Unnia.social.application.usecase.GetFollowStatusUseCase;
 import com.Unnia.social.application.usecase.ReactUseCase;
 import com.Unnia.social.application.usecase.RemoveReactionUseCase;
 import com.Unnia.social.application.usecase.ReplyToCommentUseCase;
@@ -19,6 +20,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -49,15 +51,24 @@ class InteractionController {
 	private final RemoveReactionUseCase removeReaction;
 	private final FollowAccountUseCase follow;
 	private final UnfollowAccountUseCase unfollow;
+	private final GetFollowStatusUseCase followStatus;
 
 	InteractionController(ReplyToCommentUseCase reply, DeleteCommentUseCase deleteComment, ReactUseCase react,
-			RemoveReactionUseCase removeReaction, FollowAccountUseCase follow, UnfollowAccountUseCase unfollow) {
+			RemoveReactionUseCase removeReaction, FollowAccountUseCase follow, UnfollowAccountUseCase unfollow,
+			GetFollowStatusUseCase followStatus) {
 		this.reply = reply;
 		this.deleteComment = deleteComment;
 		this.react = react;
 		this.removeReaction = removeReaction;
 		this.follow = follow;
 		this.unfollow = unfollow;
+		this.followStatus = followStatus;
+	}
+
+	@GetMapping("/api/follows/{accountId}")
+	GetFollowStatusUseCase.Status followStatus(@AuthenticationPrincipal AuthenticatedUser user,
+			@PathVariable UUID accountId) {
+		return followStatus.execute(user.accountId(), new AccountId(accountId));
 	}
 
 	@PostMapping("/api/comments/{id}/replies")

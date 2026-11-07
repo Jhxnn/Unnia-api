@@ -105,9 +105,9 @@ As durações são configuráveis em `unnia.jwt.expiration` e `unnia.refresh.exp
 | Área | Rotas |
 |---|---|
 | Auth | `POST /api/auth/register/ngo`, `/register/volunteer`, `/login`, `/refresh`, `/logout`; `PUT /api/auth/password` |
-| Perfis | `GET /api/me`, `/api/ngos/{id}`, `/api/volunteers/{id}`; `PUT /api/ngos/me`, `/api/volunteers/me` |
+| Perfis | `GET /api/me`, `/api/ngos` (vitrine das ONGs verificadas), `/api/ngos/{id}`, `/api/volunteers/{id}`; `PUT /api/ngos/me`, `/api/volunteers/me` |
 | Eventos | `POST/GET /api/events`, `GET /api/events/{id}`, `/mine`, `/registered`; `PUT /{id}`, `/{id}/schedule`, `/{id}/capacity`; `POST /{id}/publish`, `/cancel`, `/finish`, `/registrations`, `/attendance/{volunteerId}`; `DELETE /{id}/registrations`; `GET /{id}/registrations` (inscritos, só a ONG dona) |
-| Social | `POST /api/posts`, `GET /api/posts/feed`, `/{id}`, `/author/{accountId}`, `/{id}/comments`; `PUT/DELETE /api/posts/{id}`; `POST /api/comments/{id}/replies`; `PUT/DELETE /api/reactions`; `POST/DELETE /api/follows/{accountId}` |
+| Social | `POST /api/posts`, `GET /api/posts/feed`, `/{id}`, `/author/{accountId}`, `/{id}/comments`; `PUT/DELETE /api/posts/{id}`; `POST /api/comments/{id}/replies`; `PUT/DELETE /api/reactions`; `GET/POST/DELETE /api/follows/{accountId}` (status, seguir, deixar de seguir). Posts e comentários trazem o autor (nome e papel) e a reação de quem consulta |
 | Mensagens | `POST /api/messages`; `GET /api/conversations`, `/{id}/messages`; `POST /api/conversations/{id}/read` |
 | Notificações | `GET /api/notifications`, `/unread-count`; `POST /api/notifications/{id}/read`, `/read-all` |
 | Moderação | `POST /api/reports`; `GET /api/admin/reports` (com resumo do alvo); `POST /api/admin/reports/{id}/resolve`, `/dismiss` |

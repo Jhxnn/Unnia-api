@@ -38,7 +38,7 @@ class SecurityConfig {
 								"/api/auth/register/ngo", "/api/auth/register/volunteer")
 						.permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/events/mine", "/api/events/registered").authenticated()
-						.requestMatchers(HttpMethod.GET, "/api/events", "/api/events/*", "/api/ngos/*",
+						.requestMatchers(HttpMethod.GET, "/api/events", "/api/events/*", "/api/ngos", "/api/ngos/*",
 								"/api/volunteers/*")
 						.permitAll()
 						.requestMatchers("/api/admin/**").hasRole("ADMIN")

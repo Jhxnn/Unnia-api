@@ -34,6 +34,6 @@ public class GetFeedUseCase {
 		authors.add(accountId);
 		follows.findByFollower(accountId).stream().map(Follow::followeeId).forEach(authors::add);
 
-		return posts.findFeed(authors, page, size).stream().map(views::of).toList();
+		return views.list(posts.findFeed(authors, page, size), accountId);
 	}
 }

@@ -113,7 +113,7 @@ class MessagingUseCasesTest {
 		say(volunteer, ngo, "Segunda");
 		SendMessageUseCase.Result newer = say(otherVolunteer, ngo, "Oi");
 
-		List<ConversationView> inbox = new ListConversationsUseCase(conversations, messages).execute(ngo);
+		List<ConversationView> inbox = new ListConversationsUseCase(conversations, messages, directories).execute(ngo);
 
 		assertThat(inbox).extracting(ConversationView::conversationId).containsExactly(newer.conversationId(),
 				older.conversationId());

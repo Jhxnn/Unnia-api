@@ -20,6 +20,9 @@ import com.Unnia.social.domain.repository.CommentRepository;
 import com.Unnia.social.domain.repository.PostRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /** Camada anticorrupção: o contexto de mensagens enxerga identidade e social apenas por estas portas. */
@@ -31,10 +34,31 @@ final class MessagingAcl {
 	@Component
 	static class IdentityParticipantDirectory implements ParticipantDirectory {
 
-		private final AccountRepository accounts;
+		private static final String TEAM_NAME = "Equipe Unnia";
 
-		IdentityParticipantDirectory(AccountRepository accounts) {
+		private final AccountRepository accounts;
+		private final NgoProfileRepository ngos;
+		private final VolunteerProfileRepository volunteers;
+
+		IdentityParticipantDirectory(AccountRepository accounts, NgoProfileRepository ngos,
+				VolunteerProfileRepository volunteers) {
 			this.accounts = accounts;
+			this.ngos = ngos;
+			this.volunteers = volunteers;
+		}
+
+		@Override
+		public Map<AccountId, String> namesOf(Collection<AccountId> accountIds) {
+			Map<AccountId, String> names = new HashMap<>();
+			for (Account account : accounts.findAllById(accountIds)) {
+				Optional<String> name = switch (account.role()) {
+					case NGO -> ngos.findByAccountId(account.id()).map(profile -> profile.name().value());
+					case VOLUNTEER -> volunteers.findByAccountId(account.id()).map(profile -> profile.name().value());
+					case ADMIN -> Optional.of(TEAM_NAME);
+				};
+				name.ifPresent(value -> names.put(account.id(), value));
+			}
+			return names;
 		}
 
 		@Override

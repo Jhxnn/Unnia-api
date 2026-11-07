@@ -77,7 +77,7 @@ class FeedAndQueriesTest {
 		new ReactUseCase(fx.posts, fx.comments, fx.reactions, fx.publisher, fx.clock)
 				.execute(new ReactUseCase.Command(me, ReactionTarget.post(postId), ReactionType.LIKE));
 
-		PostView view = new GetPostUseCase(fx.posts, fx.views).execute(postId);
+		PostView view = new GetPostUseCase(fx.posts, fx.views).execute(postId, me);
 
 		assertThat(view.reactionCount()).isEqualTo(1);
 		assertThat(view.commentCount()).isEqualTo(2);
@@ -89,9 +89,9 @@ class FeedAndQueriesTest {
 		PostId postId = fx.post(me, "Post");
 		new DeletePostUseCase(fx.posts, fx.publisher).execute(new DeletePostUseCase.Command(me, postId));
 
-		assertThatThrownBy(() -> new GetPostUseCase(fx.posts, fx.views).execute(postId))
+		assertThatThrownBy(() -> new GetPostUseCase(fx.posts, fx.views).execute(postId, me))
 				.isInstanceOf(NotFoundException.class);
-		assertThatThrownBy(() -> new GetPostUseCase(fx.posts, fx.views).execute(PostId.generate()))
+		assertThatThrownBy(() -> new GetPostUseCase(fx.posts, fx.views).execute(PostId.generate(), me))
 				.isInstanceOf(NotFoundException.class);
 	}
 
@@ -103,7 +103,7 @@ class FeedAndQueriesTest {
 		fx.post(stranger, "De outro");
 		new DeletePostUseCase(fx.posts, fx.publisher).execute(new DeletePostUseCase.Command(followed, deleted));
 
-		List<PostView> posts = new ListPostsByAuthorUseCase(fx.posts, fx.views).execute(followed);
+		List<PostView> posts = new ListPostsByAuthorUseCase(fx.posts, fx.views).execute(followed, me);
 
 		assertThat(posts).extracting(PostView::postId).containsExactly(newer, older);
 	}

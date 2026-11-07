@@ -11,6 +11,7 @@ import com.Unnia.messaging.domain.repository.NotificationRepository;
 import com.Unnia.moderation.application.ModeratorPolicy;
 import com.Unnia.moderation.application.port.ModeratorDirectory;
 import com.Unnia.social.application.PostViews;
+import com.Unnia.social.application.port.AuthorDirectory;
 import com.Unnia.social.domain.repository.CommentRepository;
 import com.Unnia.social.domain.repository.ReactionRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,7 +70,7 @@ class ApplicationConfig {
 	}
 
 	@Bean
-	PostViews postViews(ReactionRepository reactions, CommentRepository comments) {
-		return new PostViews(reactions, comments);
+	PostViews postViews(ReactionRepository reactions, CommentRepository comments, AuthorDirectory authors) {
+		return new PostViews(reactions, comments, authors);
 	}
 }

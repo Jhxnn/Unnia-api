@@ -29,7 +29,7 @@ public class SocialFixture {
 	public final InMemoryFollowRepository follows = new InMemoryFollowRepository();
 	public final FakeDirectories directories = new FakeDirectories();
 	public final RecordingEventPublisher publisher = new RecordingEventPublisher();
-	public final PostViews views = new PostViews(reactions, comments);
+	public final PostViews views = new PostViews(reactions, comments, directories);
 
 	public AccountId account() {
 		return directories.newAccount();

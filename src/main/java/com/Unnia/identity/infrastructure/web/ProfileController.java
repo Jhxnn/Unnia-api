@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.identity.application.usecase.GetCurrentAccountUseCase;
 import com.Unnia.identity.application.usecase.GetNgoProfileUseCase;
 import com.Unnia.identity.application.usecase.GetVolunteerProfileUseCase;
+import com.Unnia.identity.application.usecase.ListVerifiedNgosUseCase;
 import com.Unnia.identity.application.usecase.UpdateNgoProfileUseCase;
 import com.Unnia.identity.application.usecase.UpdateVolunteerProfileUseCase;
 import com.Unnia.identity.infrastructure.security.AuthenticatedUser;
@@ -17,9 +18,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Perfis")
@@ -35,15 +38,18 @@ class ProfileController {
 	private final GetCurrentAccountUseCase getCurrentAccount;
 	private final GetNgoProfileUseCase getNgo;
 	private final GetVolunteerProfileUseCase getVolunteer;
+	private final ListVerifiedNgosUseCase listNgos;
 	private final UpdateNgoProfileUseCase updateNgo;
 	private final UpdateVolunteerProfileUseCase updateVolunteer;
 
 	ProfileController(GetCurrentAccountUseCase getCurrentAccount, GetNgoProfileUseCase getNgo,
-			GetVolunteerProfileUseCase getVolunteer, UpdateNgoProfileUseCase updateNgo,
+			GetVolunteerProfileUseCase getVolunteer, ListVerifiedNgosUseCase listNgos,
+			UpdateNgoProfileUseCase updateNgo,
 			UpdateVolunteerProfileUseCase updateVolunteer) {
 		this.getCurrentAccount = getCurrentAccount;
 		this.getNgo = getNgo;
 		this.getVolunteer = getVolunteer;
+		this.listNgos = listNgos;
 		this.updateNgo = updateNgo;
 		this.updateVolunteer = updateVolunteer;
 	}
@@ -52,6 +58,13 @@ class ProfileController {
 	@GetMapping("/api/me")
 	GetCurrentAccountUseCase.View me(@AuthenticationPrincipal AuthenticatedUser user) {
 		return getCurrentAccount.execute(user.accountId());
+	}
+
+	/** Vitrine pública das ONGs verificadas, em ordem alfabética. */
+	@GetMapping("/api/ngos")
+	List<ListVerifiedNgosUseCase.NgoCard> ngos(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size) {
+		return listNgos.execute(page, size);
 	}
 
 	@GetMapping("/api/ngos/{id}")

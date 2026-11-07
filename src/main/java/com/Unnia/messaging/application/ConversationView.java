@@ -5,6 +5,6 @@ import com.Unnia.shared.domain.id.AccountId;
 
 import java.time.Instant;
 
-public record ConversationView(ConversationId conversationId, AccountId otherAccountId, Instant lastActivityAt,
+public record ConversationView(ConversationId conversationId, AccountId otherAccountId, String otherName, Instant lastActivityAt,
 		long unreadCount) {
 }

@@ -9,6 +9,7 @@ import com.Unnia.shared.domain.id.VolunteerId;
 import com.Unnia.social.domain.model.CommentId;
 import com.Unnia.social.domain.model.PostId;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import java.util.Optional;
 public class FakeMessagingDirectories implements ParticipantDirectory, AccountResolver, ContentAuthors {
 
 	private final Map<AccountId, Kind> kinds = new HashMap<>();
+	private final Map<AccountId, String> names = new HashMap<>();
 	private final Map<NgoId, AccountId> ngos = new HashMap<>();
 	private final Map<VolunteerId, AccountId> volunteers = new HashMap<>();
 	private final Map<PostId, AccountId> postAuthors = new HashMap<>();
@@ -50,6 +52,23 @@ public class FakeMessagingDirectories implements ParticipantDirectory, AccountRe
 		CommentId id = CommentId.generate();
 		commentAuthors.put(id, author);
 		return id;
+	}
+
+	public AccountId account(Kind kind, String name) {
+		AccountId id = account(kind);
+		names.put(id, name);
+		return id;
+	}
+
+	@Override
+	public Map<AccountId, String> namesOf(Collection<AccountId> accountIds) {
+		Map<AccountId, String> found = new HashMap<>();
+		for (AccountId id : accountIds) {
+			if (names.containsKey(id)) {
+				found.put(id, names.get(id));
+			}
+		}
+		return found;
 	}
 
 	public void deactivate(AccountId account) {

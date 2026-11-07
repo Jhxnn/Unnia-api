@@ -120,7 +120,7 @@ class CommentUseCasesTest {
 		new DeleteCommentUseCase(fx.comments, fx.publisher)
 				.execute(new DeleteCommentUseCase.Command(commenter, deleted));
 
-		List<CommentView> views = new ListCommentsUseCase(fx.posts, fx.comments).execute(postId);
+		List<CommentView> views = new ListCommentsUseCase(fx.posts, fx.comments, fx.directories).execute(postId);
 
 		assertThat(views).extracting(CommentView::commentId).containsExactly(first, second);
 		assertThat(views.get(0).replies()).extracting(CommentView::text).containsExactly("Resposta ao primeiro");
@@ -131,7 +131,7 @@ class CommentUseCasesTest {
 	void listingFailsForDeletedPost() {
 		new DeletePostUseCase(fx.posts, fx.publisher).execute(new DeletePostUseCase.Command(author, postId));
 
-		assertThatThrownBy(() -> new ListCommentsUseCase(fx.posts, fx.comments).execute(postId))
+		assertThatThrownBy(() -> new ListCommentsUseCase(fx.posts, fx.comments, fx.directories).execute(postId))
 				.isInstanceOf(NotFoundException.class);
 	}
 }
