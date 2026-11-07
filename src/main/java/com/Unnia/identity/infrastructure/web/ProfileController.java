@@ -1,6 +1,7 @@
 package com.Unnia.identity.infrastructure.web;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.Unnia.identity.application.usecase.GetCurrentAccountUseCase;
 import com.Unnia.identity.application.usecase.GetNgoProfileUseCase;
 import com.Unnia.identity.application.usecase.GetVolunteerProfileUseCase;
 import com.Unnia.identity.application.usecase.UpdateNgoProfileUseCase;
@@ -31,17 +32,26 @@ class ProfileController {
 	record UpdateVolunteerRequest(@NotBlank String name, String bio, @NotBlank String city) {
 	}
 
+	private final GetCurrentAccountUseCase getCurrentAccount;
 	private final GetNgoProfileUseCase getNgo;
 	private final GetVolunteerProfileUseCase getVolunteer;
 	private final UpdateNgoProfileUseCase updateNgo;
 	private final UpdateVolunteerProfileUseCase updateVolunteer;
 
-	ProfileController(GetNgoProfileUseCase getNgo, GetVolunteerProfileUseCase getVolunteer,
-			UpdateNgoProfileUseCase updateNgo, UpdateVolunteerProfileUseCase updateVolunteer) {
+	ProfileController(GetCurrentAccountUseCase getCurrentAccount, GetNgoProfileUseCase getNgo,
+			GetVolunteerProfileUseCase getVolunteer, UpdateNgoProfileUseCase updateNgo,
+			UpdateVolunteerProfileUseCase updateVolunteer) {
+		this.getCurrentAccount = getCurrentAccount;
 		this.getNgo = getNgo;
 		this.getVolunteer = getVolunteer;
 		this.updateNgo = updateNgo;
 		this.updateVolunteer = updateVolunteer;
+	}
+
+	/** A conta autenticada: papel, nome e o id do perfil que aparece em eventos e inscrições. */
+	@GetMapping("/api/me")
+	GetCurrentAccountUseCase.View me(@AuthenticationPrincipal AuthenticatedUser user) {
+		return getCurrentAccount.execute(user.accountId());
 	}
 
 	@GetMapping("/api/ngos/{id}")
