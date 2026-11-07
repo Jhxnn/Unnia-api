@@ -1,17 +1,21 @@
 package com.Unnia.identity.infrastructure.web;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.identity.application.usecase.AuthenticateUseCase;
 import com.Unnia.identity.application.usecase.ChangePasswordUseCase;
+import com.Unnia.identity.application.usecase.EndSessionUseCase;
+import com.Unnia.identity.application.usecase.RefreshSessionUseCase;
 import com.Unnia.identity.application.usecase.RegisterNgoUseCase;
 import com.Unnia.identity.application.usecase.RegisterVolunteerUseCase;
+import com.Unnia.identity.application.usecase.StartSessionUseCase;
 import com.Unnia.identity.domain.model.Role;
 import com.Unnia.identity.infrastructure.security.AuthenticatedUser;
 import com.Unnia.identity.infrastructure.security.JwtService;
 import com.Unnia.identity.infrastructure.security.JwtService.IssuedToken;
+import com.Unnia.shared.application.UnauthorizedException;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
 import com.Unnia.shared.domain.id.VolunteerId;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -42,6 +46,9 @@ class AuthController {
 	record LoginRequest(@NotBlank String email, @NotBlank String password) {
 	}
 
+	record RefreshRequest(@NotBlank String refreshToken) {
+	}
+
 	record ChangePasswordRequest(@NotBlank String currentPassword, @NotBlank String newPassword) {
 	}
 
@@ -51,21 +58,30 @@ class AuthController {
 	record VolunteerRegistered(AccountId accountId, VolunteerId volunteerId) {
 	}
 
-	record LoginResponse(String token, Instant expiresAt, AccountId accountId, Role role) {
+	/** {@code token} é o JWT de acesso (curto); {@code refreshToken} renova a sessão (longo, de uso único). */
+	record SessionResponse(String token, Instant expiresAt, String refreshToken, Instant refreshExpiresAt,
+			AccountId accountId, Role role) {
 	}
 
 	private final RegisterNgoUseCase registerNgo;
 	private final RegisterVolunteerUseCase registerVolunteer;
 	private final AuthenticateUseCase authenticate;
 	private final ChangePasswordUseCase changePassword;
+	private final StartSessionUseCase startSession;
+	private final RefreshSessionUseCase refreshSession;
+	private final EndSessionUseCase endSession;
 	private final JwtService jwt;
 
 	AuthController(RegisterNgoUseCase registerNgo, RegisterVolunteerUseCase registerVolunteer,
-			AuthenticateUseCase authenticate, ChangePasswordUseCase changePassword, JwtService jwt) {
+			AuthenticateUseCase authenticate, ChangePasswordUseCase changePassword, StartSessionUseCase startSession,
+			RefreshSessionUseCase refreshSession, EndSessionUseCase endSession, JwtService jwt) {
 		this.registerNgo = registerNgo;
 		this.registerVolunteer = registerVolunteer;
 		this.authenticate = authenticate;
 		this.changePassword = changePassword;
+		this.startSession = startSession;
+		this.refreshSession = refreshSession;
+		this.endSession = endSession;
 		this.jwt = jwt;
 	}
 
@@ -86,10 +102,29 @@ class AuthController {
 	}
 
 	@PostMapping("/login")
-	LoginResponse login(@Valid @RequestBody LoginRequest request) {
-		var result = authenticate.execute(new AuthenticateUseCase.Command(request.email(), request.password()));
-		IssuedToken token = jwt.issue(result.accountId(), result.role());
-		return new LoginResponse(token.value(), token.expiresAt(), result.accountId(), result.role());
+	SessionResponse login(@Valid @RequestBody LoginRequest request) {
+		var identity = authenticate.execute(new AuthenticateUseCase.Command(request.email(), request.password()));
+		var session = startSession.execute(identity.accountId());
+		IssuedToken access = jwt.issue(identity.accountId(), identity.role());
+		return new SessionResponse(access.value(), access.expiresAt(), session.refreshToken(), session.expiresAt(),
+				identity.accountId(), identity.role());
+	}
+
+	/** Troca o token de renovação por um novo par. Cada token só funciona uma vez. */
+	@PostMapping("/refresh")
+	SessionResponse refresh(@Valid @RequestBody RefreshRequest request) {
+		if (!(refreshSession.execute(request.refreshToken()) instanceof RefreshSessionUseCase.Refreshed renewed)) {
+			throw new UnauthorizedException("Sessão inválida ou expirada");
+		}
+		IssuedToken access = jwt.issue(renewed.accountId(), renewed.role());
+		return new SessionResponse(access.value(), access.expiresAt(), renewed.refreshToken(),
+				renewed.refreshExpiresAt(), renewed.accountId(), renewed.role());
+	}
+
+	@PostMapping("/logout")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void logout(@Valid @RequestBody RefreshRequest request) {
+		endSession.execute(request.refreshToken());
 	}
 
 	@PutMapping("/password")

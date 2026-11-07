@@ -2,11 +2,13 @@ package com.Unnia.identity.application.usecase;
 
 import com.Unnia.identity.application.fakes.FakePasswordEncoder;
 import com.Unnia.identity.application.fakes.InMemoryAccountRepository;
+import com.Unnia.identity.application.fakes.InMemoryRefreshTokenRepository;
 import com.Unnia.identity.application.usecase.ChangePasswordUseCase.Command;
 import com.Unnia.identity.domain.model.Account;
 import com.Unnia.identity.domain.model.Email;
 import com.Unnia.identity.domain.model.PasswordHash;
 import com.Unnia.identity.domain.model.Role;
+import com.Unnia.shared.application.MutableClock;
 import com.Unnia.shared.application.NotFoundException;
 import com.Unnia.shared.application.UnauthorizedException;
 import com.Unnia.shared.domain.DomainException;
@@ -26,7 +28,8 @@ class ChangePasswordUseCaseTest {
 	@BeforeEach
 	void setUp() {
 		accounts = new InMemoryAccountRepository();
-		useCase = new ChangePasswordUseCase(accounts, new FakePasswordEncoder());
+		useCase = new ChangePasswordUseCase(accounts, new FakePasswordEncoder(), new InMemoryRefreshTokenRepository(),
+				new MutableClock(java.time.Instant.parse("2026-11-01T10:00:00Z")));
 		account = accounts.save(Account.register(Email.of("maria@exemplo.com"), PasswordHash.of("enc:senha1234"),
 				Role.VOLUNTEER));
 	}

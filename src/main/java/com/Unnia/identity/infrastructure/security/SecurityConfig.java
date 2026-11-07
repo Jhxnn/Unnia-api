@@ -31,8 +31,8 @@ class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/error").permitAll()
 						.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-						.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register/ngo",
-								"/api/auth/register/volunteer")
+						.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh", "/api/auth/logout",
+								"/api/auth/register/ngo", "/api/auth/register/volunteer")
 						.permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/events/mine", "/api/events/registered").authenticated()
 						.requestMatchers(HttpMethod.GET, "/api/events", "/api/events/*", "/api/ngos/*",

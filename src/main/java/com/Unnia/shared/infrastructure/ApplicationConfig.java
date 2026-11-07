@@ -4,6 +4,7 @@ import com.Unnia.events.application.EventOwnership;
 import com.Unnia.events.application.port.NgoDirectory;
 import com.Unnia.events.domain.repository.EventRepository;
 import com.Unnia.identity.application.AdminPolicy;
+import com.Unnia.identity.application.SessionPolicy;
 import com.Unnia.identity.domain.repository.AccountRepository;
 import com.Unnia.messaging.application.Notifier;
 import com.Unnia.messaging.domain.repository.NotificationRepository;
@@ -12,6 +13,7 @@ import com.Unnia.moderation.application.port.ModeratorDirectory;
 import com.Unnia.social.application.PostViews;
 import com.Unnia.social.domain.repository.CommentRepository;
 import com.Unnia.social.domain.repository.ReactionRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -19,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 
 import java.time.Clock;
+import java.time.Duration;
 
 /**
  * Fiação da camada de aplicação. Casos de uso e handlers não têm anotações de framework: são
@@ -38,6 +41,11 @@ class ApplicationConfig {
 	@Bean
 	static BeanPostProcessor useCaseTransactionPostProcessor() {
 		return new UseCaseTransactionPostProcessor();
+	}
+
+	@Bean
+	SessionPolicy sessionPolicy(@Value("${unnia.refresh.expiration:P30D}") Duration refreshTokenTtl) {
+		return new SessionPolicy(refreshTokenTtl);
 	}
 
 	@Bean
