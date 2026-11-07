@@ -106,7 +106,7 @@ As durações são configuráveis em `unnia.jwt.expiration` e `unnia.refresh.exp
 |---|---|
 | Auth | `POST /api/auth/register/ngo`, `/register/volunteer`, `/login`, `/refresh`, `/logout`; `PUT /api/auth/password` |
 | Perfis | `GET /api/me`, `/api/ngos/{id}`, `/api/volunteers/{id}`; `PUT /api/ngos/me`, `/api/volunteers/me` |
-| Eventos | `POST/GET /api/events`, `GET /api/events/{id}`, `/mine`, `/registered`; `PUT /{id}`, `/{id}/schedule`, `/{id}/capacity`; `POST /{id}/publish`, `/cancel`, `/finish`, `/registrations`, `/attendance/{volunteerId}`; `DELETE /{id}/registrations` |
+| Eventos | `POST/GET /api/events`, `GET /api/events/{id}`, `/mine`, `/registered`; `PUT /{id}`, `/{id}/schedule`, `/{id}/capacity`; `POST /{id}/publish`, `/cancel`, `/finish`, `/registrations`, `/attendance/{volunteerId}`; `DELETE /{id}/registrations`; `GET /{id}/registrations` (inscritos, só a ONG dona) |
 | Social | `POST /api/posts`, `GET /api/posts/feed`, `/{id}`, `/author/{accountId}`, `/{id}/comments`; `PUT/DELETE /api/posts/{id}`; `POST /api/comments/{id}/replies`; `PUT/DELETE /api/reactions`; `POST/DELETE /api/follows/{accountId}` |
 | Mensagens | `POST /api/messages`; `GET /api/conversations`, `/{id}/messages`; `POST /api/conversations/{id}/read` |
 | Notificações | `GET /api/notifications`, `/unread-count`; `POST /api/notifications/{id}/read`, `/read-all` |

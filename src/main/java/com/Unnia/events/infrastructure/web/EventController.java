@@ -8,6 +8,7 @@ import com.Unnia.events.application.usecase.ChangeEventCapacityUseCase;
 import com.Unnia.events.application.usecase.CreateEventUseCase;
 import com.Unnia.events.application.usecase.FinishEventUseCase;
 import com.Unnia.events.application.usecase.GetEventUseCase;
+import com.Unnia.events.application.usecase.ListEventRegistrationsUseCase;
 import com.Unnia.events.application.usecase.ListMyRegistrationsUseCase;
 import com.Unnia.events.application.usecase.ListNgoEventsUseCase;
 import com.Unnia.events.application.usecase.ListUpcomingEventsUseCase;
@@ -77,12 +78,14 @@ class EventController {
 	private final ListUpcomingEventsUseCase listUpcoming;
 	private final ListNgoEventsUseCase listMine;
 	private final ListMyRegistrationsUseCase listRegistered;
+	private final ListEventRegistrationsUseCase listRegistrants;
 
 	EventController(CreateEventUseCase create, PublishEventUseCase publish, UpdateEventDetailsUseCase update,
 			RescheduleEventUseCase reschedule, ChangeEventCapacityUseCase changeCapacity, CancelEventUseCase cancel,
 			FinishEventUseCase finish, RecordAttendanceUseCase recordAttendance, RegisterForEventUseCase register,
 			CancelRegistrationUseCase cancelRegistration, GetEventUseCase get, ListUpcomingEventsUseCase listUpcoming,
-			ListNgoEventsUseCase listMine, ListMyRegistrationsUseCase listRegistered) {
+			ListNgoEventsUseCase listMine, ListMyRegistrationsUseCase listRegistered,
+			ListEventRegistrationsUseCase listRegistrants) {
 		this.create = create;
 		this.publish = publish;
 		this.update = update;
@@ -97,6 +100,7 @@ class EventController {
 		this.listUpcoming = listUpcoming;
 		this.listMine = listMine;
 		this.listRegistered = listRegistered;
+		this.listRegistrants = listRegistrants;
 	}
 
 	@PostMapping
@@ -177,6 +181,13 @@ class EventController {
 			@PathVariable UUID volunteerId) {
 		recordAttendance.execute(new RecordAttendanceUseCase.Command(user.accountId(), new EventId(id),
 				new VolunteerId(volunteerId)));
+	}
+
+	/** Quem está inscrito: só a ONG dona do evento enxerga a lista. */
+	@GetMapping("/{id}/registrations")
+	List<ListEventRegistrationsUseCase.Registrant> registrants(@AuthenticationPrincipal AuthenticatedUser user,
+			@PathVariable UUID id) {
+		return listRegistrants.execute(user.accountId(), new EventId(id));
 	}
 
 	@PostMapping("/{id}/registrations")

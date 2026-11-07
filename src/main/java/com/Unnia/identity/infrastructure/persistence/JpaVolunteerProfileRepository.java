@@ -5,7 +5,10 @@ import com.Unnia.identity.domain.repository.VolunteerProfileRepository;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.VolunteerId;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -31,5 +34,12 @@ class JpaVolunteerProfileRepository implements VolunteerProfileRepository {
 	@Override
 	public Optional<VolunteerProfile> findByAccountId(AccountId accountId) {
 		return jpa.findByAccountId(accountId.value()).map(IdentityMapper::toDomain);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<VolunteerProfile> findAllById(Collection<VolunteerId> ids) {
+		return jpa.findAllById(ids.stream().map(VolunteerId::value).toList()).stream()
+				.map(IdentityMapper::toDomain).toList();
 	}
 }

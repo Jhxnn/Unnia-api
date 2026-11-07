@@ -11,7 +11,10 @@ import com.Unnia.shared.domain.id.NgoId;
 import com.Unnia.shared.domain.id.VolunteerId;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /** Camada anticorrupção: o contexto de eventos enxerga o de identidade apenas por estas portas. */
 final class EventsAcl {
@@ -51,6 +54,13 @@ final class EventsAcl {
 		@Override
 		public Optional<VolunteerId> findVolunteerIdByAccount(AccountId accountId) {
 			return volunteers.findByAccountId(accountId).map(VolunteerProfile::id);
+		}
+
+		@Override
+		public Map<VolunteerId, VolunteerSummary> summariesOf(Collection<VolunteerId> volunteerIds) {
+			return volunteers.findAllById(volunteerIds).stream().collect(Collectors.toMap(VolunteerProfile::id,
+					profile -> new VolunteerSummary(profile.name().value(), profile.city().value()),
+					(first, second) -> first));
 		}
 	}
 }
