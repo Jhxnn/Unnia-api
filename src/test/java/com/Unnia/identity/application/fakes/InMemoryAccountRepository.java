@@ -5,7 +5,9 @@ import com.Unnia.identity.domain.model.Email;
 import com.Unnia.identity.domain.repository.AccountRepository;
 import com.Unnia.shared.domain.id.AccountId;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,6 +34,11 @@ public class InMemoryAccountRepository implements AccountRepository {
 	@Override
 	public boolean existsByEmail(Email email) {
 		return findByEmail(email).isPresent();
+	}
+
+	@Override
+	public List<Account> findAllById(Collection<AccountId> ids) {
+		return ids.stream().map(store::get).filter(java.util.Objects::nonNull).toList();
 	}
 
 	public int size() {

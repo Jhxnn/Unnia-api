@@ -19,6 +19,8 @@ import com.Unnia.social.domain.repository.CommentRepository;
 import com.Unnia.social.domain.repository.PostRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 /** Camada anticorrupção: o contexto de moderação enxerga identidade e social apenas por estas portas. */
 final class ModerationAcl {
 
@@ -44,6 +46,8 @@ final class ModerationAcl {
 	@Component
 	static class OriginReportableContent implements ReportableContent {
 
+		private static final int EXCERPT_LENGTH = 200;
+
 		private final PostRepository posts;
 		private final CommentRepository comments;
 		private final AccountRepository accounts;
@@ -61,6 +65,21 @@ final class ModerationAcl {
 				case COMMENT -> comments.findById(new CommentId(target.id())).filter(Comment::isActive).isPresent();
 				case ACCOUNT -> accounts.findById(new AccountId(target.id())).isPresent();
 			};
+		}
+
+		@Override
+		public Optional<String> describe(ReportTarget target) {
+			return switch (target.type()) {
+				case POST -> posts.findById(new PostId(target.id())).filter(Post::isActive)
+						.map(post -> excerpt(post.content().text()));
+				case COMMENT -> comments.findById(new CommentId(target.id())).filter(Comment::isActive)
+						.map(comment -> excerpt(comment.content().text()));
+				case ACCOUNT -> accounts.findById(new AccountId(target.id())).map(account -> account.email().value());
+			};
+		}
+
+		private static String excerpt(String text) {
+			return text.length() <= EXCERPT_LENGTH ? text : text.substring(0, EXCERPT_LENGTH).stripTrailing() + "…";
 		}
 	}
 

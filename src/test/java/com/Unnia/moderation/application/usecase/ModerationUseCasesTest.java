@@ -109,7 +109,7 @@ class ModerationUseCasesTest {
 		ReportId third = fileSpam(AccountId.generate(), ports.content(ReportTargetType.COMMENT));
 		new DismissReportUseCase(policy, reports, publisher, clock)
 				.execute(new DismissReportUseCase.Command(moderator, second));
-		ListOpenReportsUseCase useCase = new ListOpenReportsUseCase(policy, reports);
+		ListOpenReportsUseCase useCase = new ListOpenReportsUseCase(policy, reports, ports);
 
 		List<ReportView> page0 = useCase.execute(moderator, 0, 1);
 		List<ReportView> page1 = useCase.execute(moderator, 1, 1);
@@ -121,7 +121,7 @@ class ModerationUseCasesTest {
 
 	@Test
 	void listingIsRestrictedToModeratorsAndValidatesPaging() {
-		ListOpenReportsUseCase useCase = new ListOpenReportsUseCase(policy, reports);
+		ListOpenReportsUseCase useCase = new ListOpenReportsUseCase(policy, reports, ports);
 
 		assertThatThrownBy(() -> useCase.execute(reporter, 0, 10)).isInstanceOf(ForbiddenException.class);
 		assertThatThrownBy(() -> useCase.execute(moderator, -1, 10)).isInstanceOf(DomainException.class);

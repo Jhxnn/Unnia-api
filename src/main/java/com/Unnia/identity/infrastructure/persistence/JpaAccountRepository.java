@@ -5,7 +5,10 @@ import com.Unnia.identity.domain.model.Email;
 import com.Unnia.identity.domain.repository.AccountRepository;
 import com.Unnia.shared.domain.id.AccountId;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -36,5 +39,12 @@ class JpaAccountRepository implements AccountRepository {
 	@Override
 	public boolean existsByEmail(Email email) {
 		return jpa.existsByEmail(email.value());
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Account> findAllById(Collection<AccountId> ids) {
+		return jpa.findAllById(ids.stream().map(AccountId::value).toList()).stream().map(IdentityMapper::toDomain)
+				.toList();
 	}
 }

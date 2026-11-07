@@ -2,11 +2,14 @@ package com.Unnia.identity.application.fakes;
 
 import com.Unnia.identity.domain.model.Cnpj;
 import com.Unnia.identity.domain.model.NgoProfile;
+import com.Unnia.identity.domain.model.VerificationStatus;
 import com.Unnia.identity.domain.repository.NgoProfileRepository;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
 
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -33,6 +36,12 @@ public class InMemoryNgoProfileRepository implements NgoProfileRepository {
 	@Override
 	public boolean existsByCnpj(Cnpj cnpj) {
 		return store.values().stream().anyMatch(p -> p.cnpj().equals(cnpj));
+	}
+
+	@Override
+	public List<NgoProfile> findByVerificationStatus(VerificationStatus status, int page, int size) {
+		return store.values().stream().filter(p -> p.verificationStatus() == status)
+				.sorted(Comparator.comparing(p -> p.name().value())).skip((long) page * size).limit(size).toList();
 	}
 
 	public int size() {

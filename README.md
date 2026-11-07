@@ -110,8 +110,8 @@ As durações são configuráveis em `unnia.jwt.expiration` e `unnia.refresh.exp
 | Social | `POST /api/posts`, `GET /api/posts/feed`, `/{id}`, `/author/{accountId}`, `/{id}/comments`; `PUT/DELETE /api/posts/{id}`; `POST /api/comments/{id}/replies`; `PUT/DELETE /api/reactions`; `POST/DELETE /api/follows/{accountId}` |
 | Mensagens | `POST /api/messages`; `GET /api/conversations`, `/{id}/messages`; `POST /api/conversations/{id}/read` |
 | Notificações | `GET /api/notifications`, `/unread-count`; `POST /api/notifications/{id}/read`, `/read-all` |
-| Moderação | `POST /api/reports`; `GET /api/admin/reports`; `POST /api/admin/reports/{id}/resolve`, `/dismiss` |
-| Admin | `POST /api/admin/ngos/{id}/verify`, `/reject`; `POST /api/admin/accounts/{id}/suspend`, `/activate` |
+| Moderação | `POST /api/reports`; `GET /api/admin/reports` (com resumo do alvo); `POST /api/admin/reports/{id}/resolve`, `/dismiss` |
+| Admin | `GET /api/admin/ngos?status=PENDING` (fila de revisão); `POST /api/admin/ngos/{id}/verify`, `/reject`; `POST /api/admin/accounts/{id}/suspend`, `/activate` |
 
 Erros seguem o formato Problem Details: `400` entrada inválida, `401` não autenticado, `403` sem permissão,
 `404` não encontrado, `409` conflito (inclusive concorrência) e `422` regra de negócio violada.

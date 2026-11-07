@@ -2,11 +2,15 @@ package com.Unnia.identity.infrastructure.persistence;
 
 import com.Unnia.identity.domain.model.Cnpj;
 import com.Unnia.identity.domain.model.NgoProfile;
+import com.Unnia.identity.domain.model.VerificationStatus;
 import com.Unnia.identity.domain.repository.NgoProfileRepository;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -37,5 +41,12 @@ class JpaNgoProfileRepository implements NgoProfileRepository {
 	@Override
 	public boolean existsByCnpj(Cnpj cnpj) {
 		return jpa.existsByCnpj(cnpj.value());
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<NgoProfile> findByVerificationStatus(VerificationStatus status, int page, int size) {
+		return jpa.findByVerificationStatusOrderByName(status, PageRequest.of(page, size)).stream()
+				.map(IdentityMapper::toDomain).toList();
 	}
 }

@@ -2,6 +2,7 @@ package com.Unnia.moderation.application.usecase;
 
 import com.Unnia.moderation.application.ModeratorPolicy;
 import com.Unnia.moderation.application.ReportView;
+import com.Unnia.moderation.application.port.ReportableContent;
 import com.Unnia.moderation.domain.model.ReportStatus;
 import com.Unnia.moderation.domain.repository.ReportRepository;
 import com.Unnia.shared.domain.Guard;
@@ -15,16 +16,19 @@ public class ListOpenReportsUseCase {
 
 	private final ModeratorPolicy policy;
 	private final ReportRepository reports;
+	private final ReportableContent content;
 
-	public ListOpenReportsUseCase(ModeratorPolicy policy, ReportRepository reports) {
+	public ListOpenReportsUseCase(ModeratorPolicy policy, ReportRepository reports, ReportableContent content) {
 		this.policy = policy;
 		this.reports = reports;
+		this.content = content;
 	}
 
 	public List<ReportView> execute(AccountId moderatorId, int page, int size) {
 		policy.requireModerator(moderatorId);
 		Guard.check(page >= 0, "Página inválida");
 		Guard.check(size >= 1 && size <= MAX_PAGE_SIZE, "O tamanho da página deve ficar entre 1 e " + MAX_PAGE_SIZE);
-		return reports.findByStatus(ReportStatus.OPEN, page, size).stream().map(ReportView::from).toList();
+		return reports.findByStatus(ReportStatus.OPEN, page, size).stream()
+				.map(report -> ReportView.from(report, content.describe(report.target()).orElse(null))).toList();
 	}
 }

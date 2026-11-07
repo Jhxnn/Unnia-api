@@ -2,7 +2,9 @@ package com.Unnia.identity.infrastructure.web;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.identity.application.usecase.ActivateAccountUseCase;
+import com.Unnia.identity.application.usecase.ListNgosForReviewUseCase;
 import com.Unnia.identity.application.usecase.RejectNgoUseCase;
+import com.Unnia.identity.domain.model.VerificationStatus;
 import com.Unnia.identity.application.usecase.SuspendAccountUseCase;
 import com.Unnia.identity.application.usecase.VerifyNgoUseCase;
 import com.Unnia.identity.infrastructure.security.AuthenticatedUser;
@@ -10,12 +12,15 @@ import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Operações restritas à equipe da plataforma (a rota inteira exige o papel ADMIN). */
@@ -28,13 +33,23 @@ class AdminController {
 	private final RejectNgoUseCase rejectNgo;
 	private final SuspendAccountUseCase suspendAccount;
 	private final ActivateAccountUseCase activateAccount;
+	private final ListNgosForReviewUseCase listNgos;
 
 	AdminController(VerifyNgoUseCase verifyNgo, RejectNgoUseCase rejectNgo, SuspendAccountUseCase suspendAccount,
-			ActivateAccountUseCase activateAccount) {
+			ActivateAccountUseCase activateAccount, ListNgosForReviewUseCase listNgos) {
 		this.verifyNgo = verifyNgo;
 		this.rejectNgo = rejectNgo;
 		this.suspendAccount = suspendAccount;
 		this.activateAccount = activateAccount;
+		this.listNgos = listNgos;
+	}
+
+	/** Fila de revisão: ONGs em uma situação de verificação (padrão: pendentes), em ordem alfabética. */
+	@GetMapping("/ngos")
+	List<ListNgosForReviewUseCase.NgoReview> ngos(@AuthenticationPrincipal AuthenticatedUser admin,
+			@RequestParam(defaultValue = "PENDING") VerificationStatus status,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+		return listNgos.execute(admin.accountId(), status, page, size);
 	}
 
 	@PostMapping("/ngos/{id}/verify")

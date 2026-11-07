@@ -8,7 +8,10 @@ import com.Unnia.moderation.domain.model.ReportTargetType;
 import com.Unnia.shared.domain.id.AccountId;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -22,6 +25,7 @@ public class FakeModerationPorts implements ModeratorDirectory, ReportableConten
 	private final Set<AccountId> moderators = new HashSet<>();
 	private final Set<ReportTarget> existing = new HashSet<>();
 	private final List<TakeDown> takeDowns = new ArrayList<>();
+	private final Map<ReportTarget, String> summaries = new HashMap<>();
 
 	public AccountId moderator() {
 		AccountId id = AccountId.generate();
@@ -32,6 +36,12 @@ public class FakeModerationPorts implements ModeratorDirectory, ReportableConten
 	public ReportTarget content(ReportTargetType type) {
 		ReportTarget target = new ReportTarget(type, UUID.randomUUID());
 		existing.add(target);
+		return target;
+	}
+
+	public ReportTarget content(ReportTargetType type, String summary) {
+		ReportTarget target = content(type);
+		summaries.put(target, summary);
 		return target;
 	}
 
@@ -47,6 +57,11 @@ public class FakeModerationPorts implements ModeratorDirectory, ReportableConten
 	@Override
 	public boolean exists(ReportTarget target) {
 		return existing.contains(target);
+	}
+
+	@Override
+	public Optional<String> describe(ReportTarget target) {
+		return Optional.ofNullable(summaries.get(target));
 	}
 
 	@Override
