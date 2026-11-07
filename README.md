@@ -142,3 +142,12 @@ cabeçalho `Retry-After` (segundos). Todas as respostas trazem `X-RateLimit-Limi
   sem proxy permitiria forjar o IP e fugir do limite.
 - Configuração em `unnia.rate-limit.*` (`enabled`, `auth-per-minute`, `general-per-minute`,
   `login-max-failures`, `login-window`).
+
+## Front-end
+
+O cliente web fica no projeto irmão `Unnia-web` (React, TypeScript, Vite). Em desenvolvimento ele encaminha
+`/api` para esta API (porta 8080), então não precisa de CORS; em produção, sirva os dois na mesma origem.
+
+**Toda mudança aqui que afete o contrato (rotas, DTOs, status HTTP, headers, regras visíveis) deve ser refletida
+no front**, em `Unnia-web/src/lib/api/types.ts`, `endpoints.ts` e `client.ts` e, quando for regra de negócio,
+em `src/features/events/eventPolicy.ts`.
