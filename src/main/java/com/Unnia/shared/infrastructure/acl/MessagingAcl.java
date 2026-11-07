@@ -2,7 +2,6 @@ package com.Unnia.shared.infrastructure.acl;
 
 import com.Unnia.identity.domain.model.Account;
 import com.Unnia.identity.domain.model.NgoProfile;
-import com.Unnia.identity.domain.model.Role;
 import com.Unnia.identity.domain.model.VolunteerProfile;
 import com.Unnia.identity.domain.repository.AccountRepository;
 import com.Unnia.identity.domain.repository.NgoProfileRepository;

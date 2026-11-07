@@ -1,11 +1,12 @@
 package com.Unnia.messaging.domain.model;
 
+import com.Unnia.shared.domain.Identifier;
 import com.Unnia.shared.domain.DomainException;
 import com.Unnia.shared.domain.Guard;
 
 import java.util.UUID;
 
-public record ConversationId(UUID value) {
+public record ConversationId(UUID value) implements Identifier {
 
 	public ConversationId {
 		Guard.notNull(value, "ConversationId é obrigatório");

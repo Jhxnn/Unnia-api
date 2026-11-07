@@ -1,11 +1,12 @@
 package com.Unnia.moderation.domain.model;
 
+import com.Unnia.shared.domain.Identifier;
 import com.Unnia.shared.domain.DomainException;
 import com.Unnia.shared.domain.Guard;
 
 import java.util.UUID;
 
-public record ReportId(UUID value) {
+public record ReportId(UUID value) implements Identifier {
 
 	public ReportId {
 		Guard.notNull(value, "ReportId é obrigatório");

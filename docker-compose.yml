@@ -1,0 +1,24 @@
+# Banco de desenvolvimento do Unnia.
+#   docker compose up -d      sobe o PostgreSQL
+#   docker compose down       para (os dados ficam no volume; use -v para apagá-los)
+# A porta do host é 5433 para não colidir com outro PostgreSQL local na 5432.
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: unnia-db
+    environment:
+      POSTGRES_DB: unnia
+      POSTGRES_USER: unnia
+      POSTGRES_PASSWORD: unnia
+    ports:
+      - "5433:5432"
+    volumes:
+      - unnia-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unnia -d unnia"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  unnia-db-data:

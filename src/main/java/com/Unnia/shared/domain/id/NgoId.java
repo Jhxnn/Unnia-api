@@ -1,11 +1,12 @@
 package com.Unnia.shared.domain.id;
 
+import com.Unnia.shared.domain.Identifier;
 import com.Unnia.shared.domain.DomainException;
 import com.Unnia.shared.domain.Guard;
 
 import java.util.UUID;
 
-public record NgoId(UUID value) {
+public record NgoId(UUID value) implements Identifier {
 
 	public NgoId {
 		Guard.notNull(value, "NgoId é obrigatório");

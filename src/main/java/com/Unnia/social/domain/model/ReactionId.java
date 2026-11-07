@@ -1,11 +1,12 @@
 package com.Unnia.social.domain.model;
 
+import com.Unnia.shared.domain.Identifier;
 import com.Unnia.shared.domain.DomainException;
 import com.Unnia.shared.domain.Guard;
 
 import java.util.UUID;
 
-public record ReactionId(UUID value) {
+public record ReactionId(UUID value) implements Identifier {
 
 	public ReactionId {
 		Guard.notNull(value, "ReactionId é obrigatório");

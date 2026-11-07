@@ -1,11 +1,12 @@
 package com.Unnia.social.domain.model;
 
+import com.Unnia.shared.domain.Identifier;
 import com.Unnia.shared.domain.DomainException;
 import com.Unnia.shared.domain.Guard;
 
 import java.util.UUID;
 
-public record PostId(UUID value) {
+public record PostId(UUID value) implements Identifier {
 
 	public PostId {
 		Guard.notNull(value, "PostId é obrigatório");

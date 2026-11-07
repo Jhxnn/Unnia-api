@@ -27,7 +27,7 @@ public class JwtService {
 	private final Duration expiration;
 	private final Clock clock;
 
-	JwtService(@Value("${unnia.jwt.secret:}") String secret,
+	public JwtService(@Value("${unnia.jwt.secret:}") String secret,
 			@Value("${unnia.jwt.expiration:PT2H}") Duration expiration, Clock clock) {
 		byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
 		if (bytes.length < MIN_SECRET_BYTES) {

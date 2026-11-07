@@ -24,8 +24,12 @@ class SecurityConfig {
 		JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwt, accounts);
 		http.csrf(AbstractHttpConfigurer::disable)
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+				.exceptionHandling(e -> e
+						.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+						// responde 403 direto, sem sendError: o redirecionamento para /error viraria 401
+						.accessDeniedHandler((request, response, denied) -> response.setStatus(HttpStatus.FORBIDDEN.value())))
 				.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/error").permitAll()
 						.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register/ngo",
 								"/api/auth/register/volunteer")
 						.permitAll()
