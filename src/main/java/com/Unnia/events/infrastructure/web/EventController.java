@@ -1,5 +1,6 @@
 package com.Unnia.events.infrastructure.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.events.application.EventView;
 import com.Unnia.events.application.usecase.CancelEventUseCase;
 import com.Unnia.events.application.usecase.CancelRegistrationUseCase;
@@ -40,6 +41,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Eventos")
 @RestController
 @RequestMapping("/api/events")
 class EventController {

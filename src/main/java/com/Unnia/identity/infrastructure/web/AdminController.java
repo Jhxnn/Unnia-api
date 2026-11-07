@@ -1,5 +1,6 @@
 package com.Unnia.identity.infrastructure.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.identity.application.usecase.ActivateAccountUseCase;
 import com.Unnia.identity.application.usecase.RejectNgoUseCase;
 import com.Unnia.identity.application.usecase.SuspendAccountUseCase;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /** Operações restritas à equipe da plataforma (a rota inteira exige o papel ADMIN). */
+@Tag(name = "Administração")
 @RestController
 @RequestMapping("/api/admin")
 class AdminController {

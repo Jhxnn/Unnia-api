@@ -1,5 +1,6 @@
 package com.Unnia.identity.infrastructure.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.identity.application.usecase.AuthenticateUseCase;
 import com.Unnia.identity.application.usecase.ChangePasswordUseCase;
 import com.Unnia.identity.application.usecase.RegisterNgoUseCase;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 
+@Tag(name = "Autenticação")
 @RestController
 @RequestMapping("/api/auth")
 class AuthController {

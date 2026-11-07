@@ -1,5 +1,6 @@
 package com.Unnia.identity.infrastructure.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.identity.application.usecase.GetNgoProfileUseCase;
 import com.Unnia.identity.application.usecase.GetVolunteerProfileUseCase;
 import com.Unnia.identity.application.usecase.UpdateNgoProfileUseCase;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+@Tag(name = "Perfis")
 @RestController
 class ProfileController {
 

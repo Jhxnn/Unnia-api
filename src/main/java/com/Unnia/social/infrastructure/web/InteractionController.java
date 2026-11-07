@@ -1,5 +1,6 @@
 package com.Unnia.social.infrastructure.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.identity.infrastructure.security.AuthenticatedUser;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.social.application.usecase.DeleteCommentUseCase;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /** Respostas a comentários, reações e seguidores. */
+@Tag(name = "Comentários, reações e seguidores")
 @RestController
 class InteractionController {
 

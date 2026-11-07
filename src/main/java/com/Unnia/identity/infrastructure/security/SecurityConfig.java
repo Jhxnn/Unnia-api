@@ -30,6 +30,7 @@ class SecurityConfig {
 						.accessDeniedHandler((request, response, denied) -> response.setStatus(HttpStatus.FORBIDDEN.value())))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/error").permitAll()
+						.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 						.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register/ngo",
 								"/api/auth/register/volunteer")
 						.permitAll()

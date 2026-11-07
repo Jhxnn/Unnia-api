@@ -1,5 +1,6 @@
 package com.Unnia.moderation.infrastructure.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.identity.infrastructure.security.AuthenticatedUser;
 import com.Unnia.moderation.application.ReportView;
 import com.Unnia.moderation.application.usecase.DismissReportUseCase;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Denúncias")
 @RestController
 class ReportController {
 

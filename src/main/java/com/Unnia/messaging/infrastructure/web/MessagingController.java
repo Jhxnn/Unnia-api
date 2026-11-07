@@ -1,5 +1,6 @@
 package com.Unnia.messaging.infrastructure.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Unnia.identity.infrastructure.security.AuthenticatedUser;
 import com.Unnia.messaging.application.ConversationView;
 import com.Unnia.messaging.application.MessageView;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Mensagens")
 @RestController
 class MessagingController {
 
