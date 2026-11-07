@@ -1,0 +1,11 @@
+target/
+.git/
+.idea/
+.vscode/
+.github/
+*.iml
+HELP.md
+docker-compose.yml
+# credenciais locais nunca entram na imagem
+src/main/resources/application-local.yaml
+src/main/resources/application-local.yml

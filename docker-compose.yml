@@ -1,7 +1,8 @@
-# Banco de desenvolvimento do Unnia.
-#   docker compose up -d      sobe o PostgreSQL
-#   docker compose down       para (os dados ficam no volume; use -v para apagá-los)
-# A porta do host é 5433 para não colidir com outro PostgreSQL local na 5432.
+# Ambiente do Unnia.
+#   docker compose up -d                  sobe só o PostgreSQL (desenvolvimento: rode a API pela IDE ou pelo Maven)
+#   docker compose --profile app up -d    sobe também a API em contêiner (exige as variáveis abaixo)
+#   docker compose down                   para (os dados ficam no volume; use -v para apagá-los)
+# A porta do banco no host é 5433 para não colidir com outro PostgreSQL local na 5432.
 services:
   db:
     image: postgres:17-alpine
@@ -19,6 +20,23 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  api:
+    profiles: ["app"]
+    build: .
+    container_name: unnia-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      UNNIA_DB_URL: jdbc:postgresql://db:5432/unnia
+      UNNIA_DB_USER: unnia
+      UNNIA_DB_PASSWORD: unnia
+      UNNIA_JWT_SECRET: ${UNNIA_JWT_SECRET:?defina UNNIA_JWT_SECRET com 32 ou mais caracteres}
+      UNNIA_ADMIN_EMAIL: ${UNNIA_ADMIN_EMAIL:-admin@unnia.com}
+      UNNIA_ADMIN_PASSWORD: ${UNNIA_ADMIN_PASSWORD:?defina UNNIA_ADMIN_PASSWORD}
+    ports:
+      - "8080:8080"
 
 volumes:
   unnia-db-data:
