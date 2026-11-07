@@ -10,6 +10,7 @@ import com.Unnia.identity.domain.repository.NgoProfileRepository;
 import com.Unnia.shared.domain.Guard;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
+import com.Unnia.shared.domain.vo.StateCode;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ public class ListNgosForReviewUseCase {
 	public static final int MAX_PAGE_SIZE = 50;
 
 	public record NgoReview(NgoId ngoId, AccountId accountId, String name, String cnpj, String description,
-			String city, String email, VerificationStatus verificationStatus, AccountStatus accountStatus) {
+			String city, String state, String email, VerificationStatus verificationStatus, AccountStatus accountStatus) {
 	}
 
 	private final AdminPolicy adminPolicy;
@@ -52,6 +53,7 @@ public class ListNgosForReviewUseCase {
 			Account owner = owners.get(profile.accountId());
 			return new NgoReview(profile.id(), profile.accountId(), profile.name().value(),
 					profile.cnpj().formatted(), profile.description().value(), profile.city().value(),
+					profile.state().map(StateCode::value).orElse(null),
 					owner.email().value(), profile.verificationStatus(), owner.status());
 		}).toList();
 	}
