@@ -42,7 +42,6 @@ services:
         condition: service_started
     environment:
       UNNIA_MAIL_HOST: mailpit
-      UNNIA_PUBLIC_URL: ${UNNIA_PUBLIC_URL:-http://localhost:8081}
       UNNIA_DB_URL: jdbc:postgresql://db:5432/unnia
       UNNIA_DB_USER: unnia
       UNNIA_DB_PASSWORD: unnia

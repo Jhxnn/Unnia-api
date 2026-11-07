@@ -1,6 +1,6 @@
 package com.Unnia.identity.application;
 
-import com.Unnia.identity.application.port.TokenGenerator;
+import com.Unnia.identity.application.port.CodeGenerator;
 import com.Unnia.identity.application.port.TokenHasher;
 import com.Unnia.identity.application.port.VerificationEmailSender;
 import com.Unnia.identity.domain.model.Account;
@@ -14,28 +14,28 @@ import java.time.Duration;
 import java.time.Instant;
 
 /**
- * Emite um link de confirmação novo e o envia por e-mail. Só um link vale por vez: ao emitir, os anteriores
- * são inutilizados. Contas já confirmadas não recebem nada.
+ * Emite um código novo e o envia por e-mail. Só um código vale por vez: ao emitir, os anteriores são
+ * inutilizados. Contas já confirmadas não recebem nada.
  */
 public class EmailVerificationIssuer {
 
-	public static final Duration TTL = Duration.ofHours(24);
+	public static final Duration TTL = Duration.ofMinutes(15);
 	/** Intervalo mínimo entre dois envios pedidos pelo usuário, para a tela de reenvio não virar spam. */
 	public static final Duration RESEND_COOLDOWN = Duration.ofMinutes(1);
 
 	private final EmailVerificationTokenRepository tokens;
-	private final TokenGenerator generator;
+	private final CodeGenerator codes;
 	private final TokenHasher hasher;
 	private final VerificationEmailSender sender;
 	private final NgoProfileRepository ngos;
 	private final VolunteerProfileRepository volunteers;
 	private final Clock clock;
 
-	public EmailVerificationIssuer(EmailVerificationTokenRepository tokens, TokenGenerator generator,
-			TokenHasher hasher, VerificationEmailSender sender, NgoProfileRepository ngos,
-			VolunteerProfileRepository volunteers, Clock clock) {
+	public EmailVerificationIssuer(EmailVerificationTokenRepository tokens, CodeGenerator codes, TokenHasher hasher,
+			VerificationEmailSender sender, NgoProfileRepository ngos, VolunteerProfileRepository volunteers,
+			Clock clock) {
 		this.tokens = tokens;
-		this.generator = generator;
+		this.codes = codes;
 		this.hasher = hasher;
 		this.sender = sender;
 		this.ngos = ngos;
@@ -50,13 +50,14 @@ public class EmailVerificationIssuer {
 		}
 		Instant now = clock.instant();
 		tokens.invalidateAllOf(account.id(), now);
-		String token = generator.newToken();
-		tokens.save(EmailVerificationToken.issue(account.id(), hasher.hash(token), now, TTL));
-		sender.send(account.email(), nameOf(account), token);
+		String code = codes.newCode();
+		tokens.save(EmailVerificationToken.issue(account.id(),
+				hasher.hash(EmailVerificationToken.secretOf(account.id(), code)), now, TTL));
+		sender.send(account.email(), nameOf(account), code);
 		return true;
 	}
 
-	/** Como {@link #issueFor}, mas ignora o pedido se um link foi enviado há pouco. */
+	/** Como {@link #issueFor}, mas ignora o pedido se um código foi enviado há pouco. */
 	public boolean issueUnlessRecent(Account account) {
 		Instant now = clock.instant();
 		boolean recent = tokens.findLatestOf(account.id())

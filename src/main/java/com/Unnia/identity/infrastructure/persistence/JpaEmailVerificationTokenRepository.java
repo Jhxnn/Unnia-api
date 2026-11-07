@@ -30,14 +30,9 @@ class JpaEmailVerificationTokenRepository implements EmailVerificationTokenRepos
 		entity.issuedAt = token.issuedAt();
 		entity.expiresAt = token.expiresAt();
 		entity.usedAt = token.usedAt().orElse(null);
+		entity.failedAttempts = token.failedAttempts();
 		jpa.save(entity);
 		return token;
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public Optional<EmailVerificationToken> findByTokenHash(String tokenHash) {
-		return jpa.findByTokenHash(tokenHash).map(JpaEmailVerificationTokenRepository::toDomain);
 	}
 
 	@Override
@@ -55,6 +50,7 @@ class JpaEmailVerificationTokenRepository implements EmailVerificationTokenRepos
 
 	private static EmailVerificationToken toDomain(EmailVerificationTokenEntity entity) {
 		return EmailVerificationToken.restore(new EmailVerificationTokenId(entity.id),
-				new AccountId(entity.accountId), entity.tokenHash, entity.issuedAt, entity.expiresAt, entity.usedAt);
+				new AccountId(entity.accountId), entity.tokenHash, entity.issuedAt, entity.expiresAt, entity.usedAt,
+				entity.failedAttempts);
 	}
 }

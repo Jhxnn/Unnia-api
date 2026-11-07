@@ -10,7 +10,7 @@ import java.util.List;
 /** Guarda o que seria enviado, e pode simular o servidor de e-mail fora do ar. */
 public class RecordingVerificationEmailSender implements VerificationEmailSender {
 
-	public record Sent(Email to, String recipientName, String token) {
+	public record Sent(Email to, String recipientName, String code) {
 	}
 
 	private final List<Sent> sent = new ArrayList<>();
@@ -21,11 +21,11 @@ public class RecordingVerificationEmailSender implements VerificationEmailSender
 	}
 
 	@Override
-	public void send(Email to, String recipientName, String token) {
+	public void send(Email to, String recipientName, String code) {
 		if (down) {
 			throw new ServiceUnavailableException("fora do ar");
 		}
-		sent.add(new Sent(to, recipientName, token));
+		sent.add(new Sent(to, recipientName, code));
 	}
 
 	public List<Sent> sent() {

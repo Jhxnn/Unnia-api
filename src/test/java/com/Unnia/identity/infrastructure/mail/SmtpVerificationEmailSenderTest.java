@@ -31,13 +31,17 @@ class SmtpVerificationEmailSenderTest {
 	void setUp() {
 		mail = mock(JavaMailSender.class);
 		when(mail.createMimeMessage()).thenAnswer(call -> new MimeMessage(Session.getInstance(new Properties())));
-		sender = new SmtpVerificationEmailSender(mail, "Unnia <nao-responda@unnia.test>", "https://unnia.test/");
+		sender = new SmtpVerificationEmailSender(mail, "Unnia <nao-responda@unnia.test>");
+	}
+
+	private MimeMessage message() {
+		ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+		verify(mail).send(captor.capture());
+		return captor.getValue();
 	}
 
 	private String raw() throws Exception {
-		ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
-		verify(mail).send(captor.capture());
-		MimeMessage message = captor.getValue();
+		MimeMessage message = message();
 		message.saveChanges();
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		message.writeTo(out);
@@ -45,73 +49,80 @@ class SmtpVerificationEmailSenderTest {
 		return out.toString(StandardCharsets.UTF_8).replace("=\r\n", "");
 	}
 
-	private MimeMessage message() throws Exception {
-		ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
-		verify(mail).send(captor.capture());
-		return captor.getValue();
-	}
-
 	@Test
-	void sendsToTheRecipientFromTheConfiguredSenderWithTheSubject() throws Exception {
-		sender.send(Email.of("maria@exemplo.com"), "Maria Souza", "abc123");
+	void sendsToTheRecipientFromTheConfiguredSender() throws Exception {
+		sender.send(Email.of("maria@exemplo.com"), "Maria Souza", "482913");
 
 		MimeMessage message = message();
 		assertThat(message.getAllRecipients()[0].toString()).isEqualTo("maria@exemplo.com");
 		assertThat(message.getFrom()[0].toString()).contains("nao-responda@unnia.test");
-		assertThat(message.getSubject()).isEqualTo(SmtpVerificationEmailSender.SUBJECT);
 	}
 
 	@Test
-	void theLinkPointsToThePublicSiteWithTheTokenAndNoDoubleSlash() throws Exception {
-		sender.send(Email.of("maria@exemplo.com"), "Maria", "abc123");
+	void theCodeIsInTheSubjectSoItShowsInThePhoneNotification() throws Exception {
+		sender.send(Email.of("maria@exemplo.com"), "Maria", "482913");
 
-		assertThat(raw()).contains("https://unnia.test/verificar-email?token=3Dabc123")
-				.doesNotContain("unnia.test//verificar");
+		assertThat(message().getSubject()).isEqualTo("Seu código do Unnia: 482913");
 	}
 
 	@Test
-	void theTokenIsUrlEncodedSoOddCharactersCannotBreakTheLink() throws Exception {
-		sender.send(Email.of("maria@exemplo.com"), "Maria", "a b&c");
-
-		assertThat(raw()).contains("token=3Da+b%26c");
-	}
-
-	@Test
-	void greetsByFirstNameAndHasBothHtmlAndTextVersions() throws Exception {
-		sender.send(Email.of("maria@exemplo.com"), "Maria Souza", "abc123");
+	void theCodeAppearsInBothTheHtmlAndTheTextVersions() throws Exception {
+		sender.send(Email.of("maria@exemplo.com"), "Maria", "482913");
 
 		String raw = raw();
-		assertThat(raw).contains("text/plain").contains("text/html").contains("Ol=C3=A1, Maria!");
+		assertThat(raw).contains("text/plain").contains("text/html");
+		assertThat(raw.split("482913", -1).length - 1).isGreaterThanOrEqualTo(3); // assunto, texto e HTML
+	}
+
+	@Test
+	void thereIsNoLinkOrButtonToClick() throws Exception {
+		sender.send(Email.of("maria@exemplo.com"), "Maria", "482913");
+
+		assertThat(raw()).doesNotContain("href=").doesNotContain("http://").doesNotContain("verificar-email");
+	}
+
+	@Test
+	void saysHowLongTheCodeLastsAndNeverToShareIt() throws Exception {
+		sender.send(Email.of("maria@exemplo.com"), "Maria", "482913");
+
+		assertThat(raw()).contains("15 minutos").contains("compartilhe com ningu");
+	}
+
+	@Test
+	void greetsByFirstName() throws Exception {
+		sender.send(Email.of("maria@exemplo.com"), "Maria Souza", "482913");
+
+		String raw = raw();
+		assertThat(raw).contains("Ol=C3=A1, Maria!");
 		assertThat(raw).doesNotContain("Olá, Maria Souza");
 	}
 
 	@Test
 	void withoutANameItGreetsGenerically() throws Exception {
-		sender.send(Email.of("maria@exemplo.com"), "", "abc123");
+		sender.send(Email.of("maria@exemplo.com"), "", "482913");
 
 		assertThat(raw()).contains("Ol=C3=A1!").doesNotContain("{{greeting}}");
 	}
 
 	@Test
 	void aNameWithMarkupIsEscapedInTheHtml() throws Exception {
-		sender.send(Email.of("maria@exemplo.com"), "<script>alert(1)</script>", "abc123");
+		sender.send(Email.of("maria@exemplo.com"), "<script>alert(1)</script>", "482913");
 
-		// a versão em HTML escapa; a versão em texto simples não precisa
 		assertThat(raw()).contains("&lt;script&gt;alert(1)&lt;/script&gt;");
 	}
 
 	@Test
 	void everyPlaceholderIsFilled() throws Exception {
-		sender.send(Email.of("maria@exemplo.com"), "Maria", "abc123");
+		sender.send(Email.of("maria@exemplo.com"), "Maria", "482913");
 
-		assertThat(raw()).doesNotContain("{{").contains("24 horas");
+		assertThat(raw()).doesNotContain("{{");
 	}
 
 	@Test
 	void aMailServerFailureBecomesServiceUnavailable() {
 		doThrow(new MailSendException("connection refused")).when(mail).send(any(MimeMessage.class));
 
-		assertThatThrownBy(() -> sender.send(Email.of("maria@exemplo.com"), "Maria", "abc123"))
+		assertThatThrownBy(() -> sender.send(Email.of("maria@exemplo.com"), "Maria", "482913"))
 				.isInstanceOf(ServiceUnavailableException.class);
 	}
 }

@@ -86,27 +86,33 @@ class AuthControllerTest {
 
 	private static final String LOGIN_BODY = "{\"email\":\"vol@exemplo.com\",\"password\":\"senha1234\"}";
 
-	@Test
-	void verifyingTheEmailPassesTheTokenAndReturnsNoContent() throws Exception {
-		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"token\":\"abc123\"}")).andExpect(status().isNoContent());
+	private static final String VERIFY_BODY = "{\"email\":\"maria@exemplo.com\",\"code\":\"482913\"}";
 
-		verify(verifyEmail).execute(new VerifyEmailUseCase.Command("abc123"));
+	@Test
+	void verifyingTheEmailPassesTheEmailAndCodeAndReturnsNoContent() throws Exception {
+		when(verifyEmail.execute(any())).thenReturn(VerifyEmailUseCase.Result.CONFIRMED);
+
+		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON).content(VERIFY_BODY))
+				.andExpect(status().isNoContent());
+
+		verify(verifyEmail).execute(new VerifyEmailUseCase.Command("maria@exemplo.com", "482913"));
 	}
 
 	@Test
-	void anInvalidLinkBecomesUnprocessableEntityWithTheReason() throws Exception {
-		doThrow(new DomainException("Link de confirmação inválido ou expirado")).when(verifyEmail).execute(any());
+	void aRejectedCodeBecomesUnprocessableEntityWithTheReason() throws Exception {
+		when(verifyEmail.execute(any())).thenReturn(VerifyEmailUseCase.Result.REJECTED);
 
-		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"token\":\"velho\"}")).andExpect(status().isUnprocessableEntity())
-				.andExpect(jsonPath("$.detail").value("Link de confirmação inválido ou expirado"));
+		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON).content(VERIFY_BODY))
+				.andExpect(status().isUnprocessableEntity())
+				.andExpect(jsonPath("$.detail").value("Código inválido ou expirado"));
 	}
 
 	@Test
-	void verifyingWithoutATokenIsABadRequest() throws Exception {
-		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON).content("{}"))
-				.andExpect(status().isBadRequest());
+	void verifyingWithoutTheCodeOrTheEmailIsABadRequest() throws Exception {
+		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"email\":\"maria@exemplo.com\"}")).andExpect(status().isBadRequest());
+		mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"code\":\"482913\"}")).andExpect(status().isBadRequest());
 
 		verify(verifyEmail, never()).execute(any());
 	}

@@ -34,8 +34,6 @@ spring:
           writetimeout: 5000
 
 unnia:
-  # Endereço público do site, usado nos links dos e-mails (/verificar-email?token=...).
-  public-url: ${UNNIA_PUBLIC_URL:http://localhost:5173}
   mail:
     from: ${UNNIA_MAIL_FROM:Unnia <nao-responda@unnia.local>}
   # Chave de assinatura dos tokens (mínimo de 32 caracteres). Defina UNNIA_JWT_SECRET em produção.

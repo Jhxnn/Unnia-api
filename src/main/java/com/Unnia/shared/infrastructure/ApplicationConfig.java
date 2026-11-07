@@ -11,7 +11,7 @@ import com.Unnia.messaging.domain.repository.NotificationRepository;
 import com.Unnia.moderation.application.ModeratorPolicy;
 import com.Unnia.moderation.application.port.ModeratorDirectory;
 import com.Unnia.identity.application.EmailVerificationIssuer;
-import com.Unnia.identity.application.port.TokenGenerator;
+import com.Unnia.identity.application.port.CodeGenerator;
 import com.Unnia.identity.application.port.TokenHasher;
 import com.Unnia.identity.application.port.VerificationEmailSender;
 import com.Unnia.identity.domain.repository.EmailVerificationTokenRepository;
@@ -57,10 +57,10 @@ class ApplicationConfig {
 	}
 
 	@Bean
-	EmailVerificationIssuer emailVerificationIssuer(EmailVerificationTokenRepository tokens, TokenGenerator generator,
+	EmailVerificationIssuer emailVerificationIssuer(EmailVerificationTokenRepository tokens, CodeGenerator codes,
 			TokenHasher hasher, VerificationEmailSender sender, NgoProfileRepository ngos,
 			VolunteerProfileRepository volunteers, Clock clock) {
-		return new EmailVerificationIssuer(tokens, generator, hasher, sender, ngos, volunteers, clock);
+		return new EmailVerificationIssuer(tokens, codes, hasher, sender, ngos, volunteers, clock);
 	}
 
 	@Bean

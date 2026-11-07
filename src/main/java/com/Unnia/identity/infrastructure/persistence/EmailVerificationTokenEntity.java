@@ -30,6 +30,9 @@ class EmailVerificationTokenEntity {
 	@Column(name = "used_at")
 	Instant usedAt;
 
+	@Column(name = "failed_attempts", nullable = false)
+	int failedAttempts;
+
 	protected EmailVerificationTokenEntity() {
 	}
 }

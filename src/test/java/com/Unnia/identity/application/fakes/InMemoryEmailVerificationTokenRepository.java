@@ -23,11 +23,6 @@ public class InMemoryEmailVerificationTokenRepository implements EmailVerificati
 	}
 
 	@Override
-	public Optional<EmailVerificationToken> findByTokenHash(String tokenHash) {
-		return store.values().stream().filter(t -> t.tokenHash().equals(tokenHash)).findFirst();
-	}
-
-	@Override
 	public Optional<EmailVerificationToken> findLatestOf(AccountId accountId) {
 		return store.values().stream().filter(t -> t.accountId().equals(accountId))
 				.max(Comparator.comparing(EmailVerificationToken::issuedAt));

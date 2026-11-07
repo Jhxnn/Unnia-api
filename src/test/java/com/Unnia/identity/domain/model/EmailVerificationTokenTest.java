@@ -13,24 +13,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class EmailVerificationTokenTest {
 
 	private static final Instant NOW = Instant.parse("2026-11-01T10:00:00Z");
-	private static final Duration TTL = Duration.ofHours(24);
+	private static final Duration TTL = Duration.ofMinutes(15);
 
 	private EmailVerificationToken token() {
 		return EmailVerificationToken.issue(AccountId.generate(), "hash", NOW, TTL);
 	}
 
 	@Test
-	void aFreshTokenIsUsableUntilItExpires() {
+	void aFreshCodeIsUsableUntilItExpires() {
 		EmailVerificationToken token = token();
 
 		assertThat(token.isUsable(NOW)).isTrue();
 		assertThat(token.isUsable(NOW.plus(TTL).minusSeconds(1))).isTrue();
 		assertThat(token.isUsable(NOW.plus(TTL))).isFalse();
-		assertThat(token.expiresAt()).isEqualTo(NOW.plus(TTL));
+		assertThat(token.failedAttempts()).isZero();
 	}
 
 	@Test
-	void consumingSpendsTheLink() {
+	void consumingSpendsTheCode() {
 		EmailVerificationToken token = token();
 
 		token.consume(NOW.plusSeconds(5));
@@ -38,15 +38,39 @@ class EmailVerificationTokenTest {
 		assertThat(token.isUsable(NOW.plusSeconds(6))).isFalse();
 		assertThat(token.usedAt()).contains(NOW.plusSeconds(5));
 		assertThatThrownBy(() -> token.consume(NOW.plusSeconds(10))).isInstanceOf(DomainException.class)
-				.hasMessage(EmailVerificationToken.INVALID_LINK);
+				.hasMessage(EmailVerificationToken.INVALID_CODE);
 	}
 
 	@Test
-	void anExpiredTokenCannotBeConsumed() {
+	void anExpiredCodeCannotBeConsumed() {
 		EmailVerificationToken token = token();
 
 		assertThatThrownBy(() -> token.consume(NOW.plus(TTL).plusSeconds(1))).isInstanceOf(DomainException.class);
 		assertThat(token.usedAt()).isEmpty();
+	}
+
+	@Test
+	void wrongAttemptsAreCountedAndTheCodeDiesAtTheLimit() {
+		EmailVerificationToken token = token();
+
+		for (int i = 1; i < EmailVerificationToken.MAX_FAILED_ATTEMPTS; i++) {
+			token.recordFailure(NOW.plusSeconds(i));
+			assertThat(token.isUsable(NOW.plusSeconds(i))).isTrue();
+		}
+		token.recordFailure(NOW.plusSeconds(10));
+
+		assertThat(token.failedAttempts()).isEqualTo(EmailVerificationToken.MAX_FAILED_ATTEMPTS);
+		assertThat(token.isUsable(NOW.plusSeconds(11))).isFalse();
+	}
+
+	@Test
+	void failuresAfterTheCodeWasSpentAreIgnored() {
+		EmailVerificationToken token = token();
+		token.consume(NOW);
+
+		token.recordFailure(NOW.plusSeconds(1));
+
+		assertThat(token.failedAttempts()).isZero();
 	}
 
 	@Test
@@ -58,6 +82,15 @@ class EmailVerificationTokenTest {
 
 		assertThat(token.usedAt()).contains(NOW.plusSeconds(1));
 		assertThat(token.isUsable(NOW.plusSeconds(10))).isFalse();
+	}
+
+	@Test
+	void theSecretTiesTheCodeToTheAccount() {
+		AccountId one = AccountId.generate();
+		AccountId other = AccountId.generate();
+
+		assertThat(EmailVerificationToken.secretOf(one, "123456")).isNotEqualTo(EmailVerificationToken.secretOf(other, "123456"));
+		assertThat(EmailVerificationToken.secretOf(one, "123456")).endsWith(":123456");
 	}
 
 	@Test

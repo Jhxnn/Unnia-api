@@ -18,26 +18,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-/** Envia o e-mail de confirmação por SMTP, em HTML com versão em texto, a partir de {@code mail/verify-email.html}. */
+/** Envia o e-mail com o código de confirmação por SMTP, em HTML com versão em texto ({@code mail/verify-email.html}). */
 @Component
 class SmtpVerificationEmailSender implements VerificationEmailSender {
 
 	private static final Logger log = LoggerFactory.getLogger(SmtpVerificationEmailSender.class);
-	static final String SUBJECT = "Confirme seu e-mail no Unnia";
 
 	private final JavaMailSender mail;
 	private final String from;
-	private final String publicUrl;
 	private final String template;
 
-	SmtpVerificationEmailSender(JavaMailSender mail, @Value("${unnia.mail.from}") String from,
-			@Value("${unnia.public-url}") String publicUrl) {
+	SmtpVerificationEmailSender(JavaMailSender mail, @Value("${unnia.mail.from}") String from) {
 		this.mail = mail;
 		this.from = from;
-		this.publicUrl = publicUrl.replaceAll("/+$", "");
 		try {
 			this.template = new String(new ClassPathResource("mail/verify-email.html").getInputStream().readAllBytes(),
 					StandardCharsets.UTF_8);
@@ -46,24 +41,27 @@ class SmtpVerificationEmailSender implements VerificationEmailSender {
 		}
 	}
 
+	/** O código vai no assunto, para aparecer na notificação do celular sem abrir o e-mail. */
+	static String subjectFor(String code) {
+		return "Seu código do Unnia: " + code;
+	}
+
 	@Override
-	public void send(Email to, String recipientName, String token) {
-		String link = publicUrl + "/verificar-email?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+	public void send(Email to, String recipientName, String code) {
 		String greeting = recipientName == null || recipientName.isBlank() ? "Olá!"
 				: "Olá, " + HtmlUtils.htmlEscape(firstName(recipientName)) + "!";
-		long hours = EmailVerificationIssuer.TTL.toHours();
+		long minutes = EmailVerificationIssuer.TTL.toMinutes();
 
-		String html = template.replace("{{greeting}}", greeting).replace("{{link}}", link)
-				.replace("{{hours}}", String.valueOf(hours));
-		String text = plainText(recipientName, link, hours);
+		String html = template.replace("{{greeting}}", greeting).replace("{{code}}", HtmlUtils.htmlEscape(code))
+				.replace("{{minutes}}", String.valueOf(minutes));
 
 		try {
 			MimeMessage message = mail.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 			helper.setFrom(new InternetAddress(from, true));
 			helper.setTo(to.value());
-			helper.setSubject(SUBJECT);
-			helper.setText(text, html);
+			helper.setSubject(subjectFor(code));
+			helper.setText(plainText(recipientName, code, minutes), html);
 			mail.send(message);
 		} catch (MailException | MessagingException e) {
 			log.error("Falha ao enviar o e-mail de confirmação", e);
@@ -78,12 +76,12 @@ class SmtpVerificationEmailSender implements VerificationEmailSender {
 		return space > 0 ? trimmed.substring(0, space) : trimmed;
 	}
 
-	private static String plainText(String recipientName, String link, long hours) {
+	private static String plainText(String recipientName, String code, long minutes) {
 		String hello = recipientName == null || recipientName.isBlank() ? "Olá!" : "Olá, " + firstName(recipientName) + "!";
 		return hello + "\n\n"
-				+ "Falta só um passo para entrar no Unnia: confirme que este e-mail é seu.\n\n"
-				+ link + "\n\n"
-				+ "O link vale por " + hours + " horas e só pode ser usado uma vez.\n"
+				+ "Seu código de confirmação do Unnia é:\n\n"
+				+ code + "\n\n"
+				+ "Digite-o na tela de confirmação. O código vale por " + minutes + " minutos.\n"
 				+ "Não criou uma conta no Unnia? Pode ignorar esta mensagem.\n\n"
 				+ "Unnia · Conecta ONGs e voluntários em eventos solidários.\n";
 	}

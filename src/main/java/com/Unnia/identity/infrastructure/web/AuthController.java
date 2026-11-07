@@ -13,7 +13,9 @@ import com.Unnia.identity.domain.model.Role;
 import com.Unnia.identity.infrastructure.security.AuthenticatedUser;
 import com.Unnia.identity.infrastructure.security.JwtService;
 import com.Unnia.identity.infrastructure.security.JwtService.IssuedToken;
+import com.Unnia.identity.domain.model.EmailVerificationToken;
 import com.Unnia.shared.application.UnauthorizedException;
+import com.Unnia.shared.domain.DomainException;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.shared.domain.id.NgoId;
 import com.Unnia.shared.domain.id.VolunteerId;
@@ -51,7 +53,7 @@ class AuthController {
 	record RefreshRequest(@NotBlank String refreshToken) {
 	}
 
-	record VerifyEmailRequest(@NotBlank String token) {
+	record VerifyEmailRequest(@NotBlank String email, @NotBlank String code) {
 	}
 
 	record ResendVerificationRequest(@NotBlank String email) {
@@ -114,14 +116,16 @@ class AuthController {
 		return new VolunteerRegistered(result.accountId(), result.volunteerId());
 	}
 
-	/** Confirma o e-mail com o token do link recebido. Abrir o mesmo link de novo também responde 204. */
+	/** Confirma o e-mail com o código de 6 dígitos recebido. Repetir o código que já confirmou também responde 204. */
 	@PostMapping("/verify-email")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	void verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
-		verifyEmail.execute(new VerifyEmailUseCase.Command(request.token()));
+		if (verifyEmail.execute(new VerifyEmailUseCase.Command(request.email(), request.code())) == VerifyEmailUseCase.Result.REJECTED) {
+			throw new DomainException(EmailVerificationToken.INVALID_CODE);
+		}
 	}
 
-	/** Reenvia o link. Responde 204 exista a conta ou não, para não revelar quais e-mails estão cadastrados. */
+	/** Reenvia o código. Responde 204 exista a conta ou não, para não revelar quais e-mails estão cadastrados. */
 	@PostMapping("/resend-verification")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	void resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
