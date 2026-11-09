@@ -35,3 +35,6 @@ build/
 ### Unnia ###
 application-local.yaml
 application-local.yml
+
+# variáveis locais com segredos (use .env.example como modelo)
+.env

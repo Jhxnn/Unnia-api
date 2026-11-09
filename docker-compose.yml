@@ -1,6 +1,6 @@
 # Ambiente do Unnia.
 #   docker compose up -d                  sobe o PostgreSQL e o Mailpit (desenvolvimento: rode a API pela IDE ou pelo Maven)
-#   docker compose --profile app up -d    sobe também a API e o site (exige as variáveis abaixo); o site fica em http://localhost:8081
+#   As variáveis vêm do arquivo .env (copie de .env.example). docker compose --profile app up -d    sobe também a API e o site (exige as variáveis abaixo); o site fica em http://localhost:8081
 #                                         e espera o repositório Unnia-front clonado como ../Unnia-web
 #   docker compose down                   para (os dados ficam no volume; use -v para apagá-los)
 # A porta do banco no host é 5433 para não colidir com outro PostgreSQL local na 5432.
@@ -41,7 +41,14 @@ services:
       mailpit:
         condition: service_started
     environment:
-      UNNIA_MAIL_HOST: mailpit
+      # e-mail: sem .env, as mensagens vão para o Mailpit (http://localhost:8025)
+      UNNIA_MAIL_HOST: ${UNNIA_MAIL_HOST:-mailpit}
+      UNNIA_MAIL_PORT: ${UNNIA_MAIL_PORT:-1025}
+      UNNIA_MAIL_USER: ${UNNIA_MAIL_USER:-}
+      UNNIA_MAIL_PASSWORD: ${UNNIA_MAIL_PASSWORD:-}
+      UNNIA_MAIL_AUTH: ${UNNIA_MAIL_AUTH:-false}
+      UNNIA_MAIL_STARTTLS: ${UNNIA_MAIL_STARTTLS:-false}
+      UNNIA_MAIL_FROM: ${UNNIA_MAIL_FROM:-Unnia <nao-responda@unnia.local>}
       UNNIA_DB_URL: jdbc:postgresql://db:5432/unnia
       UNNIA_DB_USER: unnia
       UNNIA_DB_PASSWORD: unnia
