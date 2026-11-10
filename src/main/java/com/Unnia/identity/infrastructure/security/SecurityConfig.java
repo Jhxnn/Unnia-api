@@ -5,6 +5,7 @@ import com.Unnia.shared.infrastructure.ratelimit.RateLimitPolicy;
 import com.Unnia.shared.infrastructure.ratelimit.RateLimiter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import jakarta.servlet.DispatcherType;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,6 +33,8 @@ class SecurityConfig {
 						// responde 403 direto, sem sendError: o redirecionamento para /error viraria 401
 						.accessDeniedHandler((request, response, denied) -> response.setStatus(HttpStatus.FORBIDDEN.value())))
 				.authorizeHttpRequests(auth -> auth
+						// o encerramento de uma conexão SSE volta ao servlet como despacho assíncrono, já autenticado na abertura
+						.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
 						.requestMatchers("/error").permitAll()
 						.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 						.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh", "/api/auth/logout",

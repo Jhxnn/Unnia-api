@@ -7,6 +7,7 @@ import com.Unnia.identity.application.AdminPolicy;
 import com.Unnia.identity.application.SessionPolicy;
 import com.Unnia.identity.domain.repository.AccountRepository;
 import com.Unnia.messaging.application.Notifier;
+import com.Unnia.messaging.application.port.RealtimeUpdates;
 import com.Unnia.messaging.domain.repository.NotificationRepository;
 import com.Unnia.moderation.application.ModeratorPolicy;
 import com.Unnia.moderation.application.port.ModeratorDirectory;
@@ -79,8 +80,8 @@ class ApplicationConfig {
 	}
 
 	@Bean
-	Notifier notifier(NotificationRepository notifications, Clock clock) {
-		return new Notifier(notifications, clock);
+	Notifier notifier(NotificationRepository notifications, Clock clock, RealtimeUpdates realtime) {
+		return new Notifier(notifications, clock, realtime);
 	}
 
 	@Bean

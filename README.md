@@ -117,6 +117,8 @@ Endereço: eventos e perfis aceitam `state` (sigla da UF) e `cep` opcionais, val
 
 Confirmação de e-mail: o cadastro de voluntário ou ONG envia um **código de 6 dígitos** para o e-mail (vale 15 minutos, uso único, só o hash é guardado, 5 tentativas erradas e o código é invalidado). O login só funciona depois de confirmá-lo (`403` antes disso). `POST /api/auth/verify-email` recebe `{email, code}`; `POST /api/auth/resend-verification` reenvia (resposta igual exista a conta ou não; 1 minuto entre envios). As variáveis ficam no arquivo `.env` (copie de `.env.example`; ele não vai para o git) e o compose as lê sozinho. Em desenvolvimento o Mailpit do docker-compose guarda as mensagens em http://localhost:8025. Em produção, configure `UNNIA_MAIL_HOST`, `UNNIA_MAIL_PORT`, `UNNIA_MAIL_USER`, `UNNIA_MAIL_PASSWORD`, `UNNIA_MAIL_AUTH`, `UNNIA_MAIL_STARTTLS` e `UNNIA_MAIL_FROM`.
 
+Tempo real: `GET /api/stream` (autenticado) abre um canal Server-Sent Events. Emite `ready` ao conectar e `update` com `{type, referenceId}` a cada notificação criada (só depois do commit); batimento a cada 25 s; no máximo 5 conexões por conta. As conexões ficam na memória de um processo: com várias instâncias da API, é preciso um barramento (por exemplo, Redis) para o aviso alcançar a instância certa.
+
 Erros seguem o formato Problem Details: `400` entrada inválida, `401` não autenticado, `403` sem permissão,
 `404` não encontrado, `409` conflito (inclusive concorrência) e `422` regra de negócio violada.
 
