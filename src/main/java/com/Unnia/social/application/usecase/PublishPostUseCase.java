@@ -1,5 +1,8 @@
 package com.Unnia.social.application.usecase;
 
+import com.Unnia.social.domain.model.MediaType;
+import com.Unnia.social.application.port.MediaStorage;
+import com.Unnia.shared.domain.DomainException;
 import com.Unnia.shared.application.DomainEventPublisher;
 import com.Unnia.shared.application.NotFoundException;
 import com.Unnia.shared.domain.id.AccountId;
@@ -23,13 +26,15 @@ public class PublishPostUseCase {
 	private final EventReferences eventReferences;
 	private final DomainEventPublisher publisher;
 	private final Clock clock;
+	private final MediaStorage mediaStorage;
 
 	public PublishPostUseCase(PostRepository posts, EventReferences eventReferences, DomainEventPublisher publisher,
-			Clock clock) {
+			Clock clock, MediaStorage mediaStorage) {
 		this.posts = posts;
 		this.eventReferences = eventReferences;
 		this.publisher = publisher;
 		this.clock = clock;
+		this.mediaStorage = mediaStorage;
 	}
 
 	public PostId execute(Command command) {
@@ -37,8 +42,15 @@ public class PublishPostUseCase {
 			throw new NotFoundException("Evento vinculado não encontrado");
 		}
 
+		List<MediaRef> media = command.media() == null ? List.of() : command.media();
+		for (MediaRef item : media) {
+			// só vale mídia que passou pelo envio do Unnia: nada de imagem de terceiros nem de outro tipo
+			if (item.type() != MediaType.IMAGE || !mediaStorage.owns(item.url())) {
+				throw new DomainException("Imagem inválida: envie a imagem pelo Unnia");
+			}
+		}
 		Post post = Post.publish(command.authorId(), PostContent.of(command.text()),
-				command.media() == null ? List.of() : command.media(), command.linkedEventId(), clock.instant());
+				media, command.linkedEventId(), clock.instant());
 
 		posts.save(post);
 		publisher.publishFrom(post);

@@ -4,6 +4,7 @@ import com.Unnia.shared.application.MutableClock;
 import com.Unnia.shared.application.RecordingEventPublisher;
 import com.Unnia.shared.domain.id.AccountId;
 import com.Unnia.social.application.fakes.FakeDirectories;
+import com.Unnia.social.application.fakes.FakeMediaStorage;
 import com.Unnia.social.application.fakes.InMemoryCommentRepository;
 import com.Unnia.social.application.fakes.InMemoryFollowRepository;
 import com.Unnia.social.application.fakes.InMemoryPostRepository;
@@ -28,6 +29,7 @@ public class SocialFixture {
 	public final InMemoryReactionRepository reactions = new InMemoryReactionRepository();
 	public final InMemoryFollowRepository follows = new InMemoryFollowRepository();
 	public final FakeDirectories directories = new FakeDirectories();
+	public final FakeMediaStorage media = new FakeMediaStorage();
 	public final RecordingEventPublisher publisher = new RecordingEventPublisher();
 	public final PostViews views = new PostViews(reactions, comments, directories);
 
@@ -36,7 +38,7 @@ public class SocialFixture {
 	}
 
 	public PostId post(AccountId author, String text) {
-		PostId id = new PublishPostUseCase(posts, directories, publisher, clock)
+		PostId id = new PublishPostUseCase(posts, directories, publisher, clock, media)
 				.execute(new PublishPostUseCase.Command(author, text, List.of(), null));
 		publisher.clear();
 		clock.advance(Duration.ofMinutes(1));

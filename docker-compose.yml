@@ -42,6 +42,10 @@ services:
         condition: service_started
     environment:
       # e-mail: sem .env, as mensagens vão para o Mailpit (http://localhost:8025)
+      # imagens das postagens (Supabase Storage); em branco, o envio de imagens fica desligado
+      UNNIA_SUPABASE_URL: ${UNNIA_SUPABASE_URL:-}
+      UNNIA_SUPABASE_SERVICE_KEY: ${UNNIA_SUPABASE_SERVICE_KEY:-}
+      UNNIA_SUPABASE_BUCKET: ${UNNIA_SUPABASE_BUCKET:-unnia-media}
       UNNIA_MAIL_HOST: ${UNNIA_MAIL_HOST:-mailpit}
       UNNIA_MAIL_PORT: ${UNNIA_MAIL_PORT:-1025}
       UNNIA_MAIL_USER: ${UNNIA_MAIL_USER:-}

@@ -16,6 +16,11 @@ spring:
           time_zone: UTC
   flyway:
     enabled: true
+  servlet:
+    multipart:
+      # imagens de postagens: até 5 MB cada; o limite da requisição dá folga para o cabeçalho do formulário
+      max-file-size: 5MB
+      max-request-size: 6MB
   # Servidor SMTP do e-mail de confirmação. Em desenvolvimento, o Mailpit do docker-compose recebe as
   # mensagens (caixa em http://localhost:8025). Em produção, aponte para o provedor real.
   mail:
@@ -34,6 +39,12 @@ spring:
           writetimeout: 5000
 
 unnia:
+  # Imagens das postagens: bucket público do Supabase Storage. O envio usa a chave de serviço (secreta, só no servidor).
+  # Sem URL e chave, o envio de imagens fica desligado. Veja docs/SUPABASE.md.
+  supabase:
+    url: ${UNNIA_SUPABASE_URL:}
+    service-key: ${UNNIA_SUPABASE_SERVICE_KEY:}
+    bucket: ${UNNIA_SUPABASE_BUCKET:unnia-media}
   mail:
     from: ${UNNIA_MAIL_FROM:Unnia <nao-responda@unnia.local>}
   # Chave de assinatura dos tokens (mínimo de 32 caracteres). Defina UNNIA_JWT_SECRET em produção.

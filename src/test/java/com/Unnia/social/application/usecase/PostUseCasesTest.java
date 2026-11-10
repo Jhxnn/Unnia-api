@@ -32,13 +32,13 @@ class PostUseCasesTest {
 	}
 
 	private PublishPostUseCase publish() {
-		return new PublishPostUseCase(fx.posts, fx.directories, fx.publisher, fx.clock);
+		return new PublishPostUseCase(fx.posts, fx.directories, fx.publisher, fx.clock, fx.media);
 	}
 
 	@Test
 	void publishesPostAndEvent() {
 		PostId id = publish().execute(new PublishPostUseCase.Command(author, "Vem aí o mutirão!",
-				List.of(MediaRef.image("https://x.com/a.png")), null));
+				List.of(MediaRef.image(fx.media.knownUrl())), null));
 
 		Post post = fx.posts.findById(id).orElseThrow();
 		assertThat(post.authorId()).isEqualTo(author);

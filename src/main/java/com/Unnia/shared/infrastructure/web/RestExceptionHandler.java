@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
@@ -51,6 +52,12 @@ public class RestExceptionHandler {
 		long seconds = Math.max(1, (long) Math.ceil(e.retryAfter().toMillis() / 1000.0));
 		return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).header(HttpHeaders.RETRY_AFTER, String.valueOf(seconds))
 				.body(problem(HttpStatus.TOO_MANY_REQUESTS, e.getMessage()));
+	}
+
+	/** Arquivo maior que o limite do servidor (5 MB por imagem). */
+	@ExceptionHandler(MaxUploadSizeExceededException.class)
+	ProblemDetail tooLarge(MaxUploadSizeExceededException e) {
+		return problem(HttpStatus.valueOf(413), "A imagem passa do limite de 5 MB");
 	}
 
 	@ExceptionHandler(ServiceUnavailableException.class)
