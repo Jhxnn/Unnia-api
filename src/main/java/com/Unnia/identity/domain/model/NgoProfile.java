@@ -72,8 +72,9 @@ public class NgoProfile extends AggregateRoot<NgoId> {
 		this.city = Guard.notNull(city, "Cidade é obrigatória");
 	}
 
+	/** Uma ONG recusada pode ser verificada depois, se a equipe reconsiderar; uma já verificada não muda. */
 	public void verify() {
-		ensurePending();
+		Guard.check(verificationStatus != VerificationStatus.VERIFIED, "ONG já está verificada");
 		verificationStatus = VerificationStatus.VERIFIED;
 		raise(new NgoVerified(id(), accountId));
 	}

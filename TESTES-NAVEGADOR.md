@@ -1,543 +1,446 @@
-# Casos de teste do Unnia, para execução no navegador
+# Casos de teste do Unnia, para execução no navegador (onda 2)
 
-Este documento é o roteiro de testes de ponta a ponta do Unnia. Foi escrito para ser seguido por um agente
-(Claude no navegador) ou por uma pessoa: cada caso diz **onde ir**, **o que fazer** e **o que deve acontecer**.
-Os textos entre aspas são os que aparecem na tela.
+Roteiro de testes de ponta a ponta do Unnia, para ser seguido por um agente (Claude no navegador) ou por uma pessoa:
+cada caso diz **onde ir**, **o que fazer** e **o que deve acontecer**. Os textos entre aspas são os que aparecem na tela.
+
+Esta é a **segunda onda**. A primeira rodou só como administrador (relatório de 14/11/2026) e deixou casos sem
+executar. Aqui estão **apenas** o que ainda não foi provado, o que falhou e o que foi corrigido. Os casos que já
+passaram estão listados na seção "Já testado" e **não devem ser repetidos**.
 
 ## Como usar (instruções para o agente)
 
 1. Faça o **Preparo do ambiente** abaixo antes de qualquer caso.
-2. Execute os casos na ordem dos grupos. Os grupos **A a D** criam as contas e os dados que os demais usam.
-3. Para cada caso, registre **PASSOU**, **FALHOU** ou **BLOQUEADO** (quando um caso anterior de que ele depende falhou), com uma frase de evidência. Em caso de falha, anote o que apareceu na tela, a URL e a mensagem de erro.
+2. Execute os casos **na ordem dos grupos**: A, B, C, D, E, F, G, H, I. Alguns criam dados que os seguintes usam.
+3. Para cada caso, registre **PASSOU**, **FALHOU** ou **BLOQUEADO** (quando algo de que ele depende não foi possível), com uma frase de evidência. Em falha, anote o que apareceu, a URL e a mensagem de erro.
 4. Não pule a verificação do resultado esperado: um clique que "deu certo" sem a mensagem esperada é falha.
-5. Se aparecer **"Muitas requisições"** ou **429**, espere o tempo indicado na tela; é o limite de requisições (10 por minuto nas rotas de login e cadastro) e não é defeito.
-6. Ao final, entregue o **Resumo** no formato da última seção.
+5. Se aparecer **"Muitas requisições"** ou **429**, espere o tempo indicado na tela; é o limite de 10 requisições por minuto nas rotas de login e cadastro, não é defeito. Evite repetir logins em sequência: prefira **trocar de conta com Sair e Entrar** só quando o caso pedir.
+6. **Nunca apague dados de outras pessoas.** Os casos que removem conteúdo (H01) só mexem no que o próprio teste criou.
+7. Ao final, entregue o **Resumo** no formato da última seção.
 
-Prioridade: **P0** = fluxo essencial do produto (se falhar, a entrega não está pronta); **P1** = importante;
-**P2** = complementar.
+Prioridade: **P0** = fluxo essencial (se falhar, a entrega não está pronta); **P1** = importante; **P2** = complementar.
+
+## Já testado na onda 1 (não repetir)
+
+| Caso | Resultado | O que ficou provado |
+|---|---|---|
+| A02 | PASSOU | Login de conta não confirmada leva a `/confirme-seu-email` |
+| A04 | PASSOU | Campo do código só aceita números (máx. 6); sem "Já confirmei" |
+| A05 | PASSOU | "A confirmação precisa ser igual à senha." nos dois cadastros |
+| A06 | PASSOU | CEP vazio, CEP incompleto e e-mail repetido mostram o erro certo |
+| A07 | PASSOU | CEP inexistente avisa e deixa preencher à mão |
+| B01 | PASSOU | Login e logout (cabeçalho do administrador e do visitante) |
+| B02 | PASSOU | Senha errada: "E-mail ou senha incorretos." |
+| B03 | PASSOU | Visitante nas páginas protegidas vai para `/entrar?next=...` |
+| B05 | PASSOU | Sessão sobrevive ao recarregar |
+| C05 | PASSOU | Suspender, login recusado e reativar conta |
+| E01 | PASSOU | Publicar, editar ("editado") e excluir postagem |
+| I02 | PASSOU | Foco por teclado ("Ir para o conteúdo") e envio com Enter |
+| parte de A03 | PASSOU | Código `000000` mostra "Código inválido ou expirado" |
+| parte de C03 | PASSOU | O painel mostra CNPJ, cidade, e-mail e descrição; "ONG verificada." |
+| parte de C04 | PASSOU | "Recusar" pede "Confirmar recusa"; "Voltar" cancela; "ONG recusada." |
+| parte de D07 | PASSOU | O administrador não vê botão de inscrição, só a nota explicativa |
+| parte de H02 | PASSOU | "Descartar denúncia" funciona e mostra "Denúncia descartada." |
+
+## O que mudou desde a onda 1 (corrigido, a validar de novo)
+
+- **Falha TC-C04:** em **Recusadas**, "Verificar" dava "Verificação já foi decidida". Agora uma ONG recusada **pode ser
+  verificada depois** (a equipe reconsidera). Uma ONG **verificada** continua definitiva, e **"Recusar" só aparece para
+  ONGs pendentes**. Validar nos casos C03 e C04.
+- **Falha TC-C03/F01 (cidade sem UF):** os registros antigos não tinham estado; foram preenchidos com `PE`. Cidades devem
+  aparecer como "Recife - PE". Validar em C03 e F01.
+- **Denúncias de postagem** ganharam o link **"Ver postagem"** (abre em outra aba). Antes o administrador não via a
+  postagem no próprio feed. Usar em H02.
+- **E-mail:** o código **chega no Gmail** configurado no `.env` (não no Mailpit). Veja "Lendo o código" abaixo.
+- **Contas de teste** já criadas e confirmadas (tabela abaixo), para os casos não dependerem de e-mail.
+- **Tempo real** (SSE) e **imagens em postagens** entraram depois da onda 1: casos G04 e E06.
 
 ## Preparo do ambiente
 
 | Item | Valor |
 |---|---|
 | Site | http://localhost:8081 |
-| API | http://localhost:8080 (o site repassa `/api` para ela; não precisa abrir) |
-| Caixa de e-mail de teste (Mailpit) | http://localhost:8025 |
-| Administrador | `admin@unnia.com`; a senha é o valor de `UNNIA_ADMIN_PASSWORD` no arquivo `.env` |
+| API | http://localhost:8080 (o site repassa `/api`; não precisa abrir) |
+| Administrador | `admin@unnia.com`; a senha é o valor de `UNNIA_ADMIN_PASSWORD` no `.env` do backend |
+| Caixa de e-mail de teste (Mailpit) | http://localhost:8025 (**vazia** com a configuração atual: o envio vai para o Gmail) |
 
-**Condição obrigatória para os grupos A, B e C:** o e-mail de confirmação precisa chegar no Mailpit. No `.env` as
-variáveis devem estar assim (valores do `.env.example`) e a API reiniciada com `docker compose --profile app up -d`:
+**Contas prontas** (todas com e-mail confirmado e senha `senha1234`):
 
-```
-UNNIA_MAIL_HOST=mailpit
-UNNIA_MAIL_PORT=1025
-UNNIA_MAIL_USER=
-UNNIA_MAIL_PASSWORD=
-UNNIA_MAIL_AUTH=false
-UNNIA_MAIL_STARTTLS=false
-```
+| Papel | E-mail | Nome | Situação |
+|---|---|---|---|
+| Voluntária | `voluntaria.teste@exemplo.com` | Voluntária Teste | ativa |
+| Voluntário | `voluntario.dois@exemplo.com` | Voluntário Dois | ativo |
+| ONG verificada | `ong.teste@exemplo.com` | ONG Teste | **verificada** (pode publicar eventos) |
+| ONG pendente | `ong.pendente@exemplo.com` | ONG Pendente Teste | **aguardando verificação** (use em C02 e C03) |
 
-Se o `.env` estiver apontando para o Gmail e a rede bloquear o envio, o cadastro cria a conta mas **nenhum código
-chega**: os grupos A a C ficam **BLOQUEADOS** e isso deve ser dito no resumo (não é falha do produto).
+**Lendo o código de confirmação.** O envio usa o Gmail `jhonalizan@gmail.com`. Para os casos que **criam contas novas**
+(A01, A03 e C01) use endereços com "+" que caem nessa mesma caixa:
+`jhonalizan+maria_HHMM@gmail.com`, `jhonalizan+ong_HHMM@gmail.com` (troque `HHMM` pela hora atual, por exemplo `1432`).
+O e-mail tem assunto `Seu código do Unnia: NNNNNN` e o mesmo número de 6 dígitos no corpo.
+- Se o navegador estiver com o Gmail aberto e logado, leia lá (busque por `Seu código do Unnia`).
+- Se não houver acesso ao Gmail, peça o código à pessoa que está acompanhando o teste, ou marque o caso **BLOQUEADO**
+  informando que faltou acesso à caixa de entrada. Não é falha do produto.
+- Alternativa sem Gmail: trocar no `.env` as variáveis `UNNIA_MAIL_*` pelos valores do `.env.example` (Mailpit),
+  rodar `docker compose --profile app up -d` e ler os códigos em http://localhost:8025 (e-mails `@exemplo.com` servem).
 
-**Lendo o código de confirmação:** abra http://localhost:8025, clique na mensagem mais recente para o e-mail
-cadastrado. O assunto é `Seu código do Unnia: NNNNNN` e o mesmo número de 6 dígitos aparece em destaque no corpo.
+CEPs reais: `50030-230` (Recife, PE, "Cais do Apolo") e `01310-100` (São Paulo, SP, "Avenida Paulista", bairro "Bela Vista").
+CNPJs válidos (um por ONG nova; se der "CNPJ já cadastrado", use o seguinte): `39.781.893/0001-95`, `39.886.622/0001-02`,
+`39.991.351/0001-47`, `40.096.080/0001-45`, `40.200.809/0001-81`, `40.305.538/0001-29`.
+(Os dois primeiros da lista antiga, `39.572.435/0001-46` e `39.677.164/0001-93`, já são das contas prontas.)
 
-**Dados de teste.** Use e-mails únicos para não colidir com execuções anteriores. Convenção: troque `HHMM` pela hora
-atual (por exemplo `1432`).
+Eventos devem começar **no futuro** (por exemplo, daqui a 7 dias), a não ser nos casos que pedem um evento já iniciado.
 
-| Papel | E-mail | Senha |
-|---|---|---|
-| Voluntária 1 | `maria.HHMM@exemplo.com` (nome "Maria Teste") | `senha1234` |
-| Voluntário 2 | `joao.HHMM@exemplo.com` (nome "João Teste") | `senha1234` |
-| ONG | `ong.HHMM@exemplo.com` (nome "ONG Teste HHMM") | `senha1234` |
-
-CEPs reais para os testes de endereço:
-
-| CEP | Resultado esperado do preenchimento |
-|---|---|
-| `50030-230` | Cidade **Recife**, estado **PE** (rua "Cais do Apolo") |
-| `01310-100` | Cidade **São Paulo**, estado **SP**, rua "Avenida Paulista", bairro "Bela Vista" |
-| `99999-999` | "CEP não encontrado" (não existe) |
-
-CNPJs válidos (use um por ONG; se aparecer "CNPJ já cadastrado", use o próximo):
-`39.572.435/0001-46`, `39.677.164/0001-93`, `39.781.893/0001-95`, `39.886.622/0001-02`, `39.991.351/0001-47`,
-`40.096.080/0001-45`, `40.200.809/0001-81`, `40.305.538/0001-29`.
-
-Dica para campos de data e hora: use o seletor do navegador ou digite `dd/mm/aaaa hh:mm` conforme o campo aceitar.
-Eventos devem começar **no futuro** (por exemplo, daqui a 7 dias).
+**Conta de apoio descartável.** Para casos destrutivos use contas criadas pelo próprio teste (A01, C01), nunca as
+quatro contas prontas, que serão reaproveitadas pelas próximas ondas.
 
 ---
 
 ## Grupo A. Cadastro e confirmação de e-mail
 
-### TC-A01 (P0). Cadastro de voluntário com CEP e confirmação por código
+### TC-A01 (P0). Cadastro de voluntária com CEP e confirmação por código  *(bloqueado na onda 1)*
 **Onde:** http://localhost:8081/cadastro
-1. Clique em "Criar conta de voluntário →" (cartão "Sou voluntário"). A URL passa a ser `/cadastro/voluntario`.
-2. Preencha **Nome** = `Maria Teste`, **E-mail** = `maria.HHMM@exemplo.com`, **Senha** = `senha1234`, **Confirmar senha** = `senha1234`.
-3. No campo **CEP** digite `50030230`.
-4. Aguarde ~2 segundos.
+1. Clique em "Criar conta de voluntário →" (`/cadastro/voluntario`).
+2. Preencha **Nome** = `Maria Teste`, **E-mail** = `jhonalizan+maria_HHMM@gmail.com`, **Senha** e **Confirmar senha** = `senha1234`.
+3. No **CEP** digite `50030230` e aguarde ~2 s.
 
-**Esperado:** o CEP vira `50030-230`; **Cidade** = `Recife`; **Estado** = `PE`; aparece a dica "Endereço encontrado. Confira e complete o número."
+**Esperado:** CEP vira `50030-230`; **Cidade** = `Recife`; **Estado** = `PE`; dica "Endereço encontrado. Confira e complete o número."
 
-5. Clique em **Criar conta**.
+4. Clique em **Criar conta**.
 
-**Esperado:** aviso "Conta criada. Falta só confirmar o e-mail."; a URL vira `/confirme-seu-email?email=...`; a página mostra "Enviamos um código de 6 números para **maria.HHMM@exemplo.com**".
+**Esperado:** aviso "Conta criada. Falta só confirmar o e-mail."; URL `/confirme-seu-email?email=...`; texto "Enviamos um código de 6 números para **<o e-mail>**".
 
-6. Abra o Mailpit em outra aba e leia o código da mensagem mais recente.
-7. Volte à aba do site, digite o código em **Código de confirmação** e clique em **Confirmar e-mail**.
+5. Leia o código (veja "Lendo o código"), digite em **Código de confirmação** e clique em **Confirmar e-mail**.
 
-**Esperado:** aviso "E-mail confirmado. Agora é só entrar."; redireciona para `/entrar`.
+**Esperado:** aviso "E-mail confirmado. Agora é só entrar."; vai para `/entrar`. Entrar com a nova conta funciona.
 
-### TC-A02 (P0). Login é bloqueado até confirmar o e-mail
-Use uma conta recém-criada **sem** confirmar (crie outra voluntária como no TC-A01, parando no passo 5).
-**Onde:** http://localhost:8081/entrar
-1. Informe o e-mail e a senha da conta não confirmada e clique em **Entrar**.
+### TC-A03 (P0). Limite de tentativas e reenvio do código  *(parcial: o código errado simples já passou)*
+Use uma conta **não confirmada** (a do TC-A01 antes do passo 5, ou crie outra).
+**Onde:** `/confirme-seu-email?email=<a conta>`
+1. Digite códigos errados **5 vezes** (por exemplo `000001` a `000005`), clicando em **Confirmar e-mail** a cada vez.
 
-**Esperado:** o app leva para `/confirme-seu-email?email=<o e-mail digitado>` (não entra na conta e não mostra erro genérico).
+**Esperado:** cada vez, "Código inválido ou expirado".
 
-### TC-A03 (P0). Código errado, código reaproveitado e limite de tentativas
-**Onde:** `/confirme-seu-email?email=<conta não confirmada>`
-1. Digite `000000` e clique em **Confirmar e-mail**.
+2. Digite agora o código **correto** do e-mail.
 
-**Esperado:** mensagem **"Código inválido ou expirado"** no campo; continua na mesma página.
+**Esperado:** continua recusado ("Código inválido ou expirado"): o código foi invalidado após 5 erros.
 
-2. Repita com códigos errados mais 4 vezes (5 erros no total).
-3. Agora digite o código **correto** do e-mail e confirme.
+3. Clique em **Reenviar código**.
 
-**Esperado:** continua recusado ("Código inválido ou expirado"), pois o código foi invalidado após 5 erros.
+**Esperado:** aviso "Pronto. Se houver uma conta com esse e-mail, enviamos um código novo."; o botão vira "Reenviar em N s" (contagem de ~60 s) e o campo do código é limpo.
 
-4. Clique em **Reenviar código**. Leia o código **novo** no Mailpit, digite e confirme.
+4. Leia o código **novo**, digite e confirme.
 
-**Esperado:** aviso "Pronto. Se houver uma conta com esse e-mail, enviamos um código novo."; o botão vira "Reenviar em N s" com contagem de ~60 s; o código novo confirma e leva para `/entrar`.
-
-### TC-A04 (P1). Campo do código aceita só números, 6 no máximo
-**Onde:** `/confirme-seu-email?email=qualquer@exemplo.com`
-1. Digite `48a29-13999` no campo do código.
-
-**Esperado:** o campo mostra exatamente `482913`. O botão **Confirmar e-mail** só fica habilitado com 6 números.
-
-2. Confirme que **não existe** na página nenhum link ou botão "Já confirmei".
-
-### TC-A05 (P1). Confirmação de senha no cadastro
-**Onde:** `/cadastro/voluntario` e `/cadastro/ong`
-1. Preencha tudo corretamente, mas com **Senha** = `senha1234` e **Confirmar senha** = `senha9999`. Clique no botão de cadastro.
-
-**Esperado:** erro vermelho "A confirmação precisa ser igual à senha." no campo de confirmação; **nenhum** cadastro é criado (continua na mesma página).
-
-### TC-A06 (P1). Validações do cadastro
-**Onde:** `/cadastro/voluntario`
-1. Deixe o **CEP** vazio e clique em **Criar conta**.
-
-**Esperado:** "Informe o CEP para preencher o endereço."
-
-2. Digite o CEP `5003` (incompleto).
-
-**Esperado:** "O CEP tem 8 números."
-
-3. Use um e-mail já cadastrado (o do TC-A01) com os demais campos válidos.
-
-**Esperado:** erro de e-mail já cadastrado exibido na tela (cadastro não é criado).
-
-### TC-A07 (P1). CEP inexistente e preenchimento manual
-**Onde:** `/cadastro/voluntario`
-1. Digite o CEP `99999999`.
-
-**Esperado:** "CEP não encontrado. Confira os números ou preencha o endereço à mão." Os campos **Cidade** e **Estado** continuam editáveis.
-
-2. Digite `Recife` em **Cidade** e escolha `PE` em **Estado**; o formulário volta a aceitar o envio (desde que CEP seja válido de 8 números).
+**Esperado:** confirma e vai para `/entrar`. (O código antigo, se tentado, é recusado.)
 
 ---
 
-## Grupo B. Login, sessão e proteção de páginas
+## Grupo B. Proteção por papel
 
-### TC-B01 (P0). Login e logout
-**Onde:** `/entrar`
-1. Entre com a voluntária confirmada no TC-A01.
+### TC-B04 (P0). Páginas restritas por papel  *(não executado na onda 1)*
+1. Entre como **Voluntária Teste**. Abra `/admin` e depois `/ong/eventos`.
 
-**Esperado:** vai para a página inicial; o cabeçalho mostra "Início", "Eventos", "ONGs", "Minhas inscrições", "Mensagens", o sino de notificações, o nome da pessoa e **Sair**.
+**Esperado:** ambas voltam para a página inicial (`/`), sem mostrar o conteúdo restrito. O cabeçalho **não** tem "Meus eventos" nem "Painel da equipe", e tem "Minhas inscrições".
 
-2. Clique em **Sair**.
+2. Saia e entre como **ONG Teste**. Abra `/inscricoes` e `/admin`.
 
-**Esperado:** volta à página inicial de visitante, com "Entrar" e "Criar conta" no cabeçalho.
-
-### TC-B02 (P0). Credenciais inválidas
-**Onde:** `/entrar`
-1. Informe um e-mail existente com senha errada e clique em **Entrar**.
-
-**Esperado:** mensagem de erro no formulário ("Credenciais inválidas" ou equivalente); continua em `/entrar`.
-
-### TC-B03 (P0). Páginas protegidas para visitante
-Sem estar logado, abra cada URL:
-- `/inicio`, `/mensagens`, `/notificacoes`, `/perfil`, `/inscricoes`, `/ong/eventos`, `/admin`.
-
-**Esperado:** todas redirecionam para `/entrar?next=...` (a rota pedida fica codificada no `next`). Após fazer login, volta para a página que foi pedida.
-
-### TC-B04 (P0). Páginas restritas por papel
-1. Logada como **voluntária**, abra `/admin` e `/ong/eventos`.
-2. Logada como **ONG**, abra `/inscricoes` e `/admin`.
-
-**Esperado:** em todos os casos o app volta para a página inicial (`/`), sem mostrar o conteúdo restrito. O cabeçalho do voluntário não tem "Meus eventos" nem "Painel da equipe".
-
-### TC-B05 (P1). Sessão sobrevive a recarregar a página
-1. Logada, recarregue a página (F5) em `/inicio`.
-
-**Esperado:** continua logada (não volta ao login). Depois de **Sair**, recarregar `/inicio` leva ao login.
+**Esperado:** ambas voltam para `/`. O cabeçalho tem "Meus eventos" e **não** tem "Minhas inscrições".
 
 ---
 
-## Grupo C. ONG: cadastro, verificação pela equipe e eventos
+## Grupo C. ONG: cadastro, verificação e eventos
 
-### TC-C01 (P0). Cadastro de ONG e confirmação de e-mail
+### TC-C01 (P0). Cadastro de ONG e confirmação  *(bloqueado na onda 1)*
 **Onde:** `/cadastro/ong` ("Cadastrar minha ONG")
-1. Preencha **Nome da ONG** = `ONG Teste HHMM`, **CNPJ** = um da lista, **E-mail de acesso** = `ong.HHMM@exemplo.com`, **Senha** e **Confirmar senha** = `senha1234`, **CEP** = `50030230`, e **Sobre a ONG** (opcional).
-2. Clique em **Cadastrar ONG**.
+1. Preencha **Nome da ONG** = `ONG Nova HHMM`, **CNPJ** = um da lista, **E-mail de acesso** = `jhonalizan+ong_HHMM@gmail.com`, **Senha** e **Confirmar senha** = `senha1234`, **CEP** = `50030230`. Clique em **Cadastrar ONG**.
 
-**Esperado:** "ONG cadastrada. Falta só confirmar o e-mail."; vai para `/confirme-seu-email`; o código chega no Mailpit; confirmar com o código leva a `/entrar`.
+**Esperado:** "ONG cadastrada. Falta só confirmar o e-mail."; vai para `/confirme-seu-email`. Confirmar com o código leva a `/entrar`. Essa ONG fica **pendente** e é usada em C04.
 
-### TC-C02 (P0). ONG não verificada cria rascunho, mas não publica
-1. Entre com a ONG. Clique em "Meus eventos" → **Criar evento** (ou "Criar o primeiro evento").
-2. Preencha o evento (veja TC-D01) e clique em **Salvar rascunho**.
-3. Na página do evento (status "Rascunho"), observe o painel "GERENCIAR EVENTO".
+### TC-C02 (P0). ONG não verificada cria rascunho, mas não publica  *(bloqueado na onda 1)*
+1. Entre como **ONG Pendente Teste** (`ong.pendente@exemplo.com`). Em "Meus eventos" aparece o aviso de que a ONG aguarda a verificação.
+2. Clique em **Criar evento** e crie um rascunho como no TC-D01 (título `Rascunho de teste`).
+3. Na página do evento, observe "GERENCIAR EVENTO".
 
-**Esperado:** a mensagem "Você pode publicar este rascunho assim que a equipe do Unnia verificar sua ONG." aparece e o botão **Publicar evento** está **desabilitado**. Em "Meus eventos" aparece o aviso de que a ONG aguarda verificação.
+**Esperado:** a nota "Você pode publicar este rascunho assim que a equipe do Unnia verificar sua ONG." e o botão **Publicar evento** **desabilitado**.
 
-### TC-C03 (P0). Administrador verifica a ONG
-1. Saia e entre como **administrador**. O cabeçalho deve mostrar **Painel da equipe** (com selo numérico se houver pendências).
-2. Abra **Painel da equipe**. Na aba **ONGs** → **Pendentes**, localize "ONG Teste HHMM": devem aparecer CNPJ, cidade com estado ("Recife - PE"), e-mail e descrição.
+### TC-C03 (P0). Administrador verifica a ONG  *(parcial: o painel e a verificação já passaram; falta a UF e o efeito na ONG)*
+1. Entre como **administrador** → **Painel da equipe** → **ONGs** → **Pendentes**. Localize "ONG Pendente Teste".
+
+**Esperado:** a cidade aparece com o estado: **"Recife - PE"** (e o mesmo nos demais cartões, por exemplo "Olinda - PE"). Aparecem CNPJ, e-mail e descrição.
+
+2. Clique em **Verificar**.
+
+**Esperado:** "ONG verificada."; a ONG some de Pendentes e aparece em **Verificadas**.
+
+3. Entre como **ONG Pendente Teste** e abra o rascunho do TC-C02.
+
+**Esperado:** o botão **Publicar evento** agora está **habilitado**. As notificações da ONG (`/notificacoes`) trazem "Sua ONG foi verificada e já pode publicar eventos".
+
+### TC-C04 (P1). Reconsiderar uma ONG recusada  *(falha na onda 1, corrigida)*
+1. Como administrador, em **Pendentes**, escolha a ONG criada no TC-C01 e clique em **Recusar** → **Confirmar recusa**. Ela vai para **Recusadas**.
+2. Na aba **Recusadas**, a ONG mostra **Verificar** e **não** mostra **Recusar**.
 3. Clique em **Verificar**.
 
-**Esperado:** aviso "ONG verificada."; a ONG some de "Pendentes" e aparece em **Verificadas**.
+**Esperado:** "ONG verificada." (antes dava "Verificação já foi decidida"); a ONG sai de Recusadas e aparece em Verificadas.
 
-4. Entre de novo como a ONG e abra o rascunho.
-
-**Esperado:** o botão **Publicar evento** agora está habilitado (amarelo).
-
-### TC-C04 (P1). Administrador recusa ONG (com confirmação)
-1. Cadastre e confirme uma segunda ONG (outro CNPJ).
-2. Como administrador, em **Pendentes** clique em **Recusar**.
-
-**Esperado:** o botão vira **Confirmar recusa** (nada acontece ainda). Clique em **Voltar** e a recusa é cancelada. Clique em **Recusar** e depois **Confirmar recusa**: aviso "ONG recusada."; a ONG aparece em **Recusadas** (com opção **Verificar** de novo).
-
-### TC-C05 (P1). Suspender e reativar conta
-1. No painel, em uma ONG, clique em **Suspender conta** → **Confirmar suspensão**.
-
-**Esperado:** aviso "Conta suspensa."; a ONG ganha a etiqueta "Conta suspensa" e o botão vira **Reativar conta**.
-
-2. Tente entrar com a conta suspensa.
-
-**Esperado:** o login é recusado (mensagem de conta suspensa ou credenciais inválidas).
-
-3. Clique em **Reativar conta**.
-
-**Esperado:** aviso "Conta reativada."; o login volta a funcionar.
+4. Na aba **Verificadas**, nenhuma ONG tem **Verificar** nem **Recusar** (só as ações de conta).
 
 ---
 
 ## Grupo D. Eventos
 
-(Use a ONG **verificada** do TC-C03 e as duas voluntárias.)
+(Use **ONG Teste** e as duas voluntárias.)
 
 ### TC-D01 (P0). Criar evento com endereço pelo CEP
-**Onde:** `/ong/eventos/novo` (logada como ONG verificada)
-1. Preencha **Título** = `Feira de doações`, **Descrição** (opcional).
-2. No **CEP** digite `01310100` e aguarde.
+**Onde:** `/ong/eventos/novo` (logada como **ONG Teste**)
+1. **Título** = `Feira de doações`. No **CEP** digite `01310100` e aguarde.
 
 **Esperado:** **Endereço** = `Avenida Paulista`, **Bairro** = `Bela Vista`, **Cidade** = `São Paulo`, **Estado** = `SP`.
 
-3. Preencha **Número** = `1578`, **Complemento** = `galpão 2`, **Início** e **Fim** no futuro (fim depois do início), **Vagas** = `2`.
-4. Clique em **Salvar rascunho**.
+2. **Número** = `1578`, **Complemento** = `galpão 2`, **Início** e **Fim** no futuro, **Vagas** = `1`.
+3. Clique em **Salvar rascunho**.
 
-**Esperado:** aviso "Rascunho criado. Publique quando estiver pronto."; a página do evento mostra "Avenida Paulista, 1578, galpão 2 - Bela Vista" e "São Paulo - SP", status "Rascunho", e as vagas "0/2".
+**Esperado:** "Rascunho criado. Publique quando estiver pronto."; a página mostra "Avenida Paulista, 1578, galpão 2 - Bela Vista", "São Paulo - SP", status "Rascunho" e "0/1".
 
-### TC-D02 (P0). Publicar evento e vê-lo na lista pública
-1. Na página do rascunho, clique em **Publicar evento**.
+### TC-D02 (P0). Publicar e ver na lista pública
+1. Clique em **Publicar evento**.
 
-**Esperado:** aviso "Evento publicado. Já aceita inscrições."; o status muda para aberto.
+**Esperado:** "Evento publicado. Já aceita inscrições."
 
 2. Saia e abra `/eventos` como visitante.
 
-**Esperado:** o evento "Feira de doações" aparece na lista, com a cidade "São Paulo - SP" e a fileira de vagas.
+**Esperado:** "Feira de doações" aparece, com "São Paulo - SP" e a fileira de vagas.
 
-3. Digite `Recife` no filtro "Filtrar por cidade".
+3. Filtre por cidade `Recife`.
 
-**Esperado:** o evento (que é de São Paulo) some da lista, com o aviso "Nada em “Recife” por enquanto"; limpar o filtro o traz de volta.
+**Esperado:** o evento some, com "Nada em “Recife” por enquanto"; limpar o filtro o traz de volta.
 
-### TC-D03 (P0). Inscrição de voluntário, lotação e cancelamento
-1. Como **visitante**, abra o evento.
+### TC-D03 (P0). Inscrição, lotação e cancelamento
+1. Como **visitante**, abra o evento: aparece **Entrar para se inscrever**.
+2. Entre como **Voluntária Teste**, abra o evento e clique em **Inscrever-se**.
 
-**Esperado:** o painel mostra **Entrar para se inscrever** (não **Inscrever-se**).
+**Esperado:** "Inscrição confirmada. Sua vaga está reservada."; vagas "1/1"; o botão vira **Cancelar inscrição**; o evento aparece em "Minhas inscrições".
 
-2. Entre como **Maria** e abra o evento. Clique em **Inscrever-se**.
+3. Entre como **Voluntário Dois** e abra o evento.
 
-**Esperado:** aviso "Inscrição confirmada. Sua vaga está reservada."; vagas "1/2"; o botão vira **Cancelar inscrição**; o evento aparece em "Minhas inscrições".
+**Esperado:** aparece **Evento lotado**, sem opção de inscrição.
 
-3. Entre como **João** e inscreva-se também (vagas "2/2").
-4. Entre com uma **terceira** conta voluntária (ou crie outra) e abra o evento.
+4. Volte como **Voluntária Teste**, clique em **Cancelar inscrição** → **Sim, cancelar minha vaga**.
 
-**Esperado:** aparece **Evento lotado** (sem opção de inscrição).
-
-5. Como **Maria**, clique em **Cancelar inscrição** → **Sim, cancelar minha vaga**.
-
-**Esperado:** aviso "Inscrição cancelada. A vaga foi liberada."; vagas voltam a "1/2".
+**Esperado:** "Inscrição cancelada. A vaga foi liberada."; vagas "0/1". O **Voluntário Dois** agora consegue **Inscrever-se** (faça isso: ele fica inscrito para D04).
 
 ### TC-D04 (P0). ONG vê os inscritos
-1. Entre como a ONG dona e abra o evento.
+1. Entre como **ONG Teste** e abra o evento.
 
-**Esperado:** a seção **Inscritos** lista os inscritos ativos (nome, cidade e quando se inscreveram) com o resumo "N inscritos · 0 presenças". Maria (que cancelou) **não** aparece.
+**Esperado:** a seção **Inscritos** lista **Voluntário Dois** (nome, cidade, quando se inscreveu) com "1 inscritos · 0 presenças". A Voluntária Teste (que cancelou) **não** aparece.
 
-2. Entre como Maria ou João e abra o mesmo evento.
+2. Entre como **Voluntária Teste** e abra o mesmo evento.
 
 **Esperado:** a seção **Inscritos** **não** aparece para voluntários.
 
 ### TC-D05 (P1). Editar, remarcar e mudar vagas
-**Onde:** página do evento → botão **Editar evento** (`/ong/eventos/:id/editar`)
-1. Em **Detalhes**, mude o **Título** e clique em **Salvar detalhes**.
+**Onde:** página do evento → **Editar evento** (`/ong/eventos/:id/editar`)
+1. Em **Detalhes**, mude o **Título** e clique em **Salvar detalhes**: "Detalhes atualizados."
+2. Em **Horário**, mude para outro dia e clique em **Remarcar**: "Horário atualizado."; o formulário diz quantas pessoas inscritas serão avisadas.
+3. Em **Vagas**, informe `0` ou um número menor que o de inscritos e salve.
 
-**Esperado:** aviso "Detalhes atualizados."; a página do evento mostra o título novo.
+**Esperado:** erro ("Informe pelo menos 1 vaga." ou "Já há N inscritos: as vagas não podem ser menos que isso."); nada é salvo. Com um número maior: "Vagas atualizadas.".
 
-2. Em **Horário**, mude início e fim para outro dia e clique em **Remarcar**.
+4. Em **Horário**, ponha o **Fim** antes do **Início**: "O fim precisa ser depois do início."
 
-**Esperado:** aviso "Horário atualizado."; se houver inscritos, o formulário diz quantas pessoas serão avisadas.
+### TC-D06 (P1). Presença, encerramento e cancelamento
+Crie um evento publicado que comece em poucos minutos (ou aguarde o início), com **Voluntário Dois** inscrito.
+1. Antes do início, em **Inscritos** o botão **Registrar presença** está desabilitado, com a nota "A presença pode ser registrada quando o evento começar."
+2. Depois do início, clique em **Registrar presença**.
 
-3. Em **Vagas**, informe um número **menor** que o de inscritos e clique em **Salvar vagas**.
+**Esperado:** "Presença registrada."; selo "Presença registrada" e "1 presenças".
 
-**Esperado:** erro "Já há N inscritos: as vagas não podem ser menos que isso." (nada é salvo). Com um número maior, aviso "Vagas atualizadas.".
+3. Em **outro** evento publicado, clique em **Cancelar evento** → **Sim, cancelar o evento**.
 
-4. Em **Horário**, ponha o **Fim** antes do **Início**.
+**Esperado:** "Evento cancelado. Os inscritos foram avisados."; os inscritos recebem notificação (G02).
 
-**Esperado:** "O fim precisa ser depois do início."
+4. Depois do horário de término de um evento, clique em **Encerrar evento**: "Evento encerrado.".
 
-### TC-D06 (P1). Presença, encerramento e cancelamento do evento
-Crie um evento publicado que comece em poucos minutos (ou aguarde o início de um existente), com Maria inscrita.
-1. Depois do horário de início, abra o evento como a ONG.
-
-**Esperado:** na seção **Inscritos** o botão **Registrar presença** está habilitado. Antes do início ele fica desabilitado com a nota "A presença pode ser registrada quando o evento começar."
-
-2. Clique em **Registrar presença** de Maria.
-
-**Esperado:** aviso "Presença registrada."; Maria ganha o selo "Presença registrada" e o resumo mostra "1 presenças".
-
-3. Em outro evento publicado, clique em **Cancelar evento** → **Sim, cancelar o evento**.
-
-**Esperado:** aviso "Evento cancelado. Os inscritos foram avisados."; os inscritos recebem uma notificação (ver TC-G04).
-
-4. Depois do horário de término de um evento, clique em **Encerrar evento**.
-
-**Esperado:** aviso "Evento encerrado.".
-
-### TC-D07 (P1). Regras do evento
-- Evento em **rascunho** aberto por URL como visitante: não deve ser exibido (não encontrado).
-- Voluntária tenta inscrever-se em evento que **já começou**: o painel mostra "O evento já começou, então as inscrições estão encerradas." sem botão de inscrição.
-- ONG e administrador não veem botão de inscrição (nota "Contas de ONG e de administração não se inscrevem em eventos." ou ausência do botão).
+### TC-D07 (P1). Regras restantes do evento  *(parte do administrador já passou)*
+- **Rascunho** aberto por URL como visitante: não é exibido (não encontrado).
+- Voluntária diante de evento que **já começou**: "O evento já começou, então as inscrições estão encerradas." e nenhum botão de inscrição.
+- **ONG Teste** abrindo um evento de **outra** ONG: não vê **Inscrever-se** (nota "Contas de ONG e de administração não se inscrevem em eventos.") nem os botões de gerenciar.
 
 ---
 
-## Grupo E. Feed, postagens e interações
-
-### TC-E01 (P0). Publicar, editar e excluir uma postagem
-**Onde:** `/inicio` (logada)
-1. Em "O que você quer compartilhar?" escreva `Primeira publicação de teste` e clique em **Publicar**.
-
-**Esperado:** aviso "Publicado."; a postagem aparece no topo do feed com o nome e a inicial da pessoa e "agora".
-
-2. Na postagem, clique em **Editar**, mude o texto, clique em **Salvar**.
-
-**Esperado:** aviso "Postagem atualizada."; o texto novo aparece com a marca "· editado" junto do horário.
-
-3. Clique em **Excluir** → **Confirmar exclusão**.
-
-**Esperado:** aviso "Postagem excluída."; some do feed.
+## Grupo E. Feed e interações
 
 ### TC-E02 (P0). Reações
-1. Em uma postagem de **outra pessoa**, clique em **Curtir**.
+1. Como **Voluntária Teste**, em uma postagem de **outra pessoa** clique em **Curtir**.
 
-**Esperado:** o botão fica amarelo (marcado) e o contador sobe ("1 reação").
+**Esperado:** o botão fica amarelo e o contador sobe ("1 reação").
 
-2. Clique em **Adorei**.
-
-**Esperado:** a reação troca (só **Adorei** marcado); contador continua em 1.
-
-3. Clique de novo em **Adorei**.
-
-**Esperado:** a reação é removida ("0 reações").
+2. Clique em **Adorei**: a reação troca (só **Adorei** marcado), contador continua em 1.
+3. Clique de novo em **Adorei**: a reação some ("0 reações").
 
 ### TC-E03 (P0). Comentar e responder
-1. Em uma postagem, clique em "N comentários" para abrir a seção. Digite em "Escreva um comentário" e clique em **Enviar**.
+1. Em uma postagem, clique em "N comentários", escreva em "Escreva um comentário" e clique em **Enviar**.
 
 **Esperado:** o comentário aparece com o nome do autor; o contador sobe.
 
 2. Com **outra conta**, abra a mesma postagem, clique em **Responder** no comentário, escreva e envie.
 
-**Esperado:** a resposta aparece aninhada abaixo do comentário. Respostas **não** têm botão "Responder".
+**Esperado:** a resposta aparece aninhada. Respostas **não** têm "Responder".
 
-3. O autor do comentário vê **Excluir** nos seus comentários e **não** vê "Denunciar" neles; quem não é o autor vê **Denunciar** e não vê **Excluir**.
+3. O autor do comentário vê **Excluir** e **não** vê "Denunciar" nos seus; quem não é o autor vê **Denunciar** e não vê **Excluir**.
 
 ### TC-E04 (P1). ONG divulga um evento no feed
-1. Como ONG verificada com um evento **publicado**, em `/inicio` o formulário mostra o seletor **Divulgar um evento** com esse evento (rascunhos e cancelados **não** aparecem).
+1. Como **ONG Teste**, com um evento **publicado**, em `/inicio` o seletor **Divulgar um evento** lista esse evento (rascunhos e cancelados **não** aparecem).
 2. Escolha o evento, escreva o texto e **Publicar**.
 
 **Esperado:** a postagem mostra o atalho "Ver o evento", que leva à página do evento.
 
-3. Como voluntária, o formulário **não** tem o seletor "Divulgar um evento".
+3. Como voluntária, o formulário **não** tem esse seletor.
 
-### TC-E05 (P1). Feed vazio e lista de seguidos
-1. Entre com uma conta nova que não segue ninguém e não publicou.
+### TC-E05 (P1). Feed vazio e feed dos seguidos
+1. Entre com uma conta que não segue ninguém e não publicou (use a do TC-A01 recém-criada).
 
 **Esperado:** "Seu feed está vazio" com o botão **Conhecer ONGs** (leva a `/ongs`).
 
 2. Depois de seguir uma ONG que publicou (TC-F01), as postagens dela aparecem no feed.
 
+### TC-E06 (P2). Imagens em postagens  *(novo)*
+O envio de imagens depende do Supabase; por padrão **não está configurado** neste ambiente.
+1. Em `/inicio`, clique em **Adicionar imagem** e escolha uma imagem JPEG ou PNG pequena.
+
+**Esperado se o Supabase não estiver configurado:** aviso "O envio de imagens ainda não está configurado." e nenhuma miniatura; o resto do formulário continua funcionando e dá para publicar só o texto.
+**Esperado se estiver configurado:** aparece a miniatura; ao publicar, a postagem mostra a imagem, e clicar nela abre a original em outra aba.
+
+2. Tente anexar um arquivo que não é imagem (por exemplo `.txt`): aviso "Use uma imagem JPEG, PNG, WebP ou GIF." (ou o seletor nem o oferece).
+
 ---
 
 ## Grupo F. Perfis, seguir e mensagens
 
-### TC-F01 (P0). Vitrine de ONGs e seguir
+### TC-F01 (P0). Vitrine de ONGs e seguir  *(parcial: a vitrine filtrar por verificadas já passou; falta a UF e o seguir)*
 **Onde:** `/ongs`
-1. Abra a vitrine.
+1. **Esperado:** só ONGs **verificadas** (a pendente e as recusadas não aparecem); cada cartão mostra nome, **"Cidade - UF"** (por exemplo "Recife - PE") e descrição.
+2. Abra uma ONG (`/ongs/:id`) como **visitante**: aparece "Entrar para seguir e conversar" e **nenhuma** publicação.
+3. Logada como **Voluntária Teste**, clique em **Seguir**.
 
-**Esperado:** só ONGs **verificadas** aparecem (a ONG pendente/recusada não). Cada cartão mostra nome, "Cidade - UF" e descrição.
-
-2. Abra uma ONG (`/ongs/:id`). Como **visitante**, o perfil mostra o botão "Entrar para seguir e conversar" e **não** mostra publicações.
-3. Logada como voluntária, clique em **Seguir**.
-
-**Esperado:** aviso "Agora você segue."; o botão vira **Seguindo** e o contador de seguidores sobe. Clique em **Seguindo** para deixar de seguir ("Você deixou de seguir.").
+**Esperado:** "Agora você segue."; o botão vira **Seguindo** e o contador de seguidores sobe. Clique em **Seguindo**: "Você deixou de seguir.".
 
 ### TC-F02 (P0). Mensagens entre voluntária e ONG
-1. No perfil da ONG, como voluntária, clique em **Enviar mensagem**. A URL é `/mensagens?para=...&nome=...`.
+1. No perfil da **ONG Teste**, como **Voluntária Teste**, clique em **Enviar mensagem** (`/mensagens?para=...`).
 
-**Esperado:** aparece "Nova conversa com <nome da ONG>". Escreva e clique em **Enviar**; a conversa é criada e aparece na lista com a mensagem enviada alinhada à direita.
+**Esperado:** "Nova conversa com ONG Teste". Escreva e **Enviar**: a conversa é criada e a mensagem fica alinhada à direita.
 
-2. Entre como a ONG.
+2. Entre como **ONG Teste**.
 
-**Esperado:** o item **Mensagens** do menu mostra um selo vermelho com "1"; a conversa mostra um selo de não lidas. Abra a conversa: o selo some (marcada como lida). Responda e envie.
+**Esperado:** o item **Mensagens** mostra um selo vermelho "1" e a conversa mostra o selo de não lidas. Ao abrir a conversa o selo some. Responda.
 
-3. Volte como a voluntária: a resposta aparece na conversa (pode levar até ~10 segundos para atualizar sozinha, ou recarregue).
+3. Volte como a voluntária: a resposta aparece na conversa.
 
-### TC-F03 (P1). Perfil de voluntário e edição do próprio perfil
-1. Em `/perfil` (logada), altere **Nome** e **Sobre você** e clique em **Salvar perfil**.
+### TC-F03 (P1). Editar o próprio perfil
+1. Em `/perfil`, mude **Nome** e **Sobre você** e clique em **Salvar perfil**: "Perfil atualizado."; o nome novo aparece no cabeçalho.
+2. Mude o **CEP** para `01310100` e aguarde: **Cidade** = `São Paulo`, **Estado** = `SP`. Salve; no perfil público aparece "São Paulo - SP".
+3. No perfil público de **outra** pessoa aparecem **Seguir**, **Enviar mensagem** e **Denunciar perfil**; no **próprio** aparece **Editar meu perfil** e nenhum desses três.
 
-**Esperado:** aviso "Perfil atualizado."; o nome novo aparece no cabeçalho.
-
-2. Mude o **CEP** para `01310100` e aguarde o preenchimento: **Cidade** = `São Paulo`, **Estado** = `SP`. Salve. Abra o perfil público e confira "São Paulo - SP".
-
-3. Abra o perfil público de **outra** pessoa: aparecem os botões **Seguir**, **Enviar mensagem** e **Denunciar perfil**. No **próprio** perfil aparece **Editar meu perfil** e nenhum desses três.
-
-### TC-F04 (P1). Trocar a senha
+### TC-F04 (P1). Trocar a senha  *(use a conta criada no TC-A01, não as contas prontas)*
 **Onde:** `/perfil`, seção "Senha"
-1. Informe uma **Senha atual errada**, uma nova senha e a confirmação, e clique em **Trocar senha**.
-
-**Esperado:** erro "Senha atual incorreta" no campo da senha atual; continua logada.
-
-2. Informe a senha atual correta, `novaSenha456` e a confirmação **diferente**.
-
-**Esperado:** "A confirmação precisa ser igual à nova senha." (nada é enviado).
-
-3. Informe tudo correto.
-
-**Esperado:** aviso "Senha alterada. Entre novamente com a nova senha."; vai para `/entrar` (sessão encerrada). O login com a senha **antiga** falha; com a **nova** funciona.
+1. **Senha atual** errada + nova + confirmação: erro "Senha atual incorreta"; continua logada.
+2. Senha atual certa, nova e confirmação **diferente**: "A confirmação precisa ser igual à nova senha."
+3. Tudo correto: "Senha alterada. Entre novamente com a nova senha."; vai para `/entrar`. O login com a senha antiga falha; com a nova funciona.
 
 ---
 
-## Grupo G. Notificações
+## Grupo G. Notificações e tempo real
 
 ### TC-G01 (P0). Sino, contagem e leitura
-1. Gere atividade para a ONG: com uma voluntária, **siga** a ONG, **reaja** e **comente** em uma postagem dela, e **inscreva-se** em um evento dela.
-2. Entre como a ONG.
+1. Gere atividade para a **ONG Teste**: com a **Voluntária Teste**, **siga** a ONG, **reaja** e **comente** em uma postagem dela e **inscreva-se** em um evento dela.
+2. Entre como **ONG Teste**.
 
-**Esperado:** o sino do cabeçalho mostra um selo vermelho com a quantidade. Abra `/notificacoes`: aparecem itens como "Você tem um novo seguidor", "Alguém reagiu ao seu conteúdo", "Alguém comentou na sua postagem" e "Um voluntário se inscreveu no seu evento", os não lidos com destaque amarelo.
+**Esperado:** o sino mostra um selo vermelho com a quantidade. Em `/notificacoes`: "Você tem um novo seguidor", "Alguém reagiu ao seu conteúdo", "Alguém comentou na sua postagem" e "Um voluntário se inscreveu no seu evento", os não lidos em amarelo.
 
 3. Clique em uma notificação de comentário.
 
-**Esperado:** abre a postagem (`/posts/:id`); ao voltar, essa notificação aparece como lida e o contador do sino diminuiu em 1.
+**Esperado:** abre a postagem (`/posts/:id`); depois, essa notificação aparece como lida e o selo do sino diminuiu em 1.
 
-4. Clique em **Marcar todas como lidas**.
+4. Clique em **Marcar todas como lidas**: "Tudo marcado como lido."; o selo some e o botão desaparece.
 
-**Esperado:** aviso "Tudo marcado como lido."; o selo do sino some e o botão desaparece.
-
-### TC-G02 (P1). Notificação de evento cancelado e de ONG verificada
-- A voluntária inscrita em um evento que a ONG cancelou recebe uma notificação, que leva à página do evento.
-- A ONG verificada pelo administrador recebe "Sua ONG foi verificada e já pode publicar eventos", que leva a `/ong/eventos`.
-- A notificação "novo seguidor" **não** leva a lugar nenhum (é um botão que só marca como lida).
+### TC-G02 (P1). Destinos das notificações
+- Evento cancelado pela ONG: a voluntária inscrita recebe notificação que leva à página do evento.
+- ONG verificada: "Sua ONG foi verificada e já pode publicar eventos" leva a `/ong/eventos`.
+- "Novo seguidor" **não** leva a lugar nenhum (é botão que só marca como lida).
 
 ### TC-G03 (P2). Sem notificações
-- Uma conta nova abre `/notificacoes`.
+Uma conta nova abre `/notificacoes`: "Nada por aqui ainda" e a explicação.
 
-**Esperado:** "Nada por aqui ainda" com a explicação do que aparece ali.
+### TC-G04 (P1). Atualização em tempo real  *(novo)*
+Exige **duas sessões ao mesmo tempo** (por exemplo, uma janela normal e uma janela anônima).
+1. Na janela 1, entre como **ONG Teste** e fique em `/inicio`, **sem recarregar**. Anote o selo de "Mensagens" e o do sino.
+2. Na janela 2, entre como **Voluntária Teste** e envie uma mensagem à ONG (como no TC-F02).
+
+**Esperado:** em poucos segundos, **sem recarregar**, o selo de "Mensagens" da janela 1 sobe e o sino também. Se a conversa estiver aberta na janela 1, a mensagem aparece nela sozinha.
+
+Se não for possível abrir duas sessões, marque **BLOQUEADO**.
 
 ---
 
 ## Grupo H. Denúncias e moderação
 
 ### TC-H01 (P0). Denunciar e moderar
-1. Como voluntária, em uma postagem de **outra** pessoa clique em **Denunciar**.
-
-**Esperado:** abre o formulário com **Motivo** (padrão "Spam") e "Detalhes (opcional)".
-
+Use uma postagem **criada pelo teste** (por exemplo, a da **Voluntária Teste** com o texto `Postagem para denunciar HHMM`).
+1. Como **Voluntário Dois**, em uma postagem **de outra pessoa** clique em **Denunciar**: abre o formulário com **Motivo** (padrão "Spam") e "Detalhes (opcional)".
 2. Escolha "Golpe", escreva um detalhe e clique em **Enviar denúncia**.
 
-**Esperado:** aviso "Denúncia enviada. A equipe vai analisar."
+**Esperado:** "Denúncia enviada. A equipe vai analisar."
 
-3. Denuncie a **mesma** postagem de novo com a mesma conta.
+3. Denuncie a **mesma** postagem de novo com a mesma conta: erro dizendo que já foi denunciada.
+4. Como **administrador** → **Painel da equipe** → **Denúncias**.
 
-**Esperado:** erro informando que já foi denunciada (não cria duplicata).
+**Esperado:** a denúncia aparece com "Golpe", "Postagem", a data, o **trecho do texto**, o link **"Ver postagem"** e o detalhe escrito. O selo do menu conta as pendências.
 
-4. Entre como **administrador** → **Painel da equipe** → aba **Denúncias**.
+5. Clique em **Remover postagem** → **Confirmar remoção** (**somente** na postagem criada pelo teste).
 
-**Esperado:** a denúncia aparece com a etiqueta do motivo ("Golpe"), o tipo ("Postagem"), a data, o **trecho do texto denunciado** em destaque e o detalhe escrito pela pessoa. O selo do menu conta as pendências.
+**Esperado:** "Denúncia resolvida."; a denúncia sai da fila; `/posts/<id>` mostra "Postagem indisponível".
 
-5. Clique em **Remover postagem** → **Confirmar remoção**.
+### TC-H02 (P1). Descartar mantém o conteúdo, e tipos de alvo  *(parcial: descartar já passou)*
+1. Denuncie outra postagem (criada pelo teste) e confira o botão **Ver postagem** no painel.
+2. Clique em **Descartar denúncia**.
 
-**Esperado:** aviso "Denúncia resolvida."; a denúncia some da fila e a postagem **desaparece do feed** (acessar `/posts/:id` mostra "Postagem indisponível").
+**Esperado:** "Denúncia descartada."; ao abrir a postagem pelo link ou por `/posts/<id>`, ela **continua visível**.
 
-### TC-H02 (P1). Descartar denúncia e tipos de alvo
-1. Denuncie outra postagem, um **comentário** e um **perfil** ("Denunciar perfil").
-2. No painel, em cada denúncia os botões mudam conforme o alvo: "Remover postagem", "Remover comentário" e "Suspender conta".
-3. Clique em **Descartar denúncia** em uma delas.
-
-**Esperado:** aviso "Denúncia descartada."; o conteúdo **continua** visível.
+3. Denuncie um **comentário** e um **perfil** ("Denunciar perfil"): os botões do painel mudam para "Remover comentário" e "Suspender conta"; só postagens têm "Ver postagem".
 
 ### TC-H03 (P2). Limites do que se pode denunciar
-- Em uma postagem **sua**, não existe botão **Denunciar**.
+- Em uma postagem **sua** não existe **Denunciar**.
 - Visitante não vê botões de denúncia.
 
 ---
 
-## Grupo I. Responsividade e acessibilidade (P2)
+## Grupo I. Responsividade (P2)
 
-### TC-I01. Celular (largura de 390 px)
-Redimensione a janela para ~390 px de largura (ou use a emulação de dispositivo) e percorra: `/`, `/eventos`, um evento, `/cadastro/voluntario`, `/inicio`, `/mensagens`.
+### TC-I01. Celular (390 px de largura)  *(não executado na onda 1: a janela não redimensionou)*
+Tente, nesta ordem: (a) emulação de dispositivo do navegador (DevTools, "Toggle device toolbar", 390 px); (b) redimensionar a janela;
+(c) abrir `http://localhost:8081` no celular na mesma rede. Se nenhuma funcionar, marque **BLOQUEADO**.
+Percorra `/`, `/eventos`, um evento, `/cadastro/voluntario`, `/inicio` e `/mensagens`.
 
-**Esperado:** nenhuma página tem rolagem horizontal; o menu rola na horizontal dentro da própria barra; o nome da pessoa some do cabeçalho e aparece o link "Meu perfil" na barra de links; em `/mensagens` aparece ou a lista de conversas ou a conversa, nunca as duas lado a lado; os botões de ação dos cartões (por exemplo "Registrar presença") quebram para baixo do nome.
-
-### TC-I02. Teclado
-1. Na página inicial, aperte **Tab** uma vez.
-
-**Esperado:** o primeiro foco é o link "Ir para o conteúdo" (visível ao receber foco).
-
-2. Percorra o formulário de login só com **Tab** e envie com **Enter**.
-
-**Esperado:** todos os campos e botões recebem foco visível e o formulário envia.
+**Esperado:** nenhuma página com rolagem horizontal; o menu rola na horizontal dentro da barra; o nome sai do cabeçalho e aparece "Meu perfil" na barra de links; em `/mensagens` aparece a lista **ou** a conversa, nunca as duas; os botões de ação dos cartões quebram para baixo do nome.
 
 ---
 
 ## Resumo a entregar
 
-Ao terminar, responda neste formato:
-
 ```
-Ambiente: <site e API respondendo? e-mail em Mailpit ou Gmail?>
+Ambiente: <site e API respondendo? código chegou no Gmail ou Mailpit? Supabase configurado?>
 Total: <N casos> | PASSOU: <n> | FALHOU: <n> | BLOQUEADO: <n>
 
 FALHAS (mais graves primeiro)
-- TC-XXX (P0/P1/P2): <o que era esperado> / <o que aconteceu> / <URL> / <mensagem de erro, se houver>
+- TC-XXX (P0/P1/P2): <esperado> / <o que aconteceu> / <URL> / <mensagem de erro, se houver>
 
 BLOQUEADOS
 - TC-XXX: <qual caso anterior falhou ou o que faltou no ambiente>
+
+DADOS ALTERADOS
+- <contas, ONGs, eventos, postagens criados ou modificados>
 
 OBSERVAÇÕES
 - <qualquer comportamento estranho que não seja falha de um caso>
 ```
 
-Os casos **P0** são: A01, A02, A03, B01, B02, B03, B04, C01, C02, C03, D01, D02, D03, D04, E01, E02, E03, F01, F02,
-G01 e H01. Se algum deles falhar, destaque no início do resumo.
+Casos **P0 desta onda**: A01, A03, B04, C01, C02, C03, D01, D02, D03, D04, E02, E03, F01, F02, G01 e H01. Se algum falhar,
+destaque no início do resumo.

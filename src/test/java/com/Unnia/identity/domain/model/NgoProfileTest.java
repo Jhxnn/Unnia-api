@@ -87,15 +87,25 @@ class NgoProfileTest {
 	}
 
 	@Test
-	void decisionIsFinal() {
+	void aVerifiedNgoIsFinal() {
 		NgoProfile verified = profile(ngoAccount());
 		verified.verify();
-		NgoProfile rejected = profile(ngoAccount());
-		rejected.reject();
 
 		assertThatThrownBy(verified::reject).isInstanceOf(DomainException.class);
-		assertThatThrownBy(verified::verify).isInstanceOf(DomainException.class);
-		assertThatThrownBy(rejected::verify).isInstanceOf(DomainException.class);
+		assertThatThrownBy(verified::verify).isInstanceOf(DomainException.class).hasMessage("ONG já está verificada");
+	}
+
+	@Test
+	void aRejectedNgoCannotBeRejectedAgainButCanBeVerifiedOnReconsideration() {
+		NgoProfile rejected = profile(ngoAccount());
+		rejected.reject();
+		rejected.pullDomainEvents();
+
+		assertThatThrownBy(rejected::reject).isInstanceOf(DomainException.class);
+		rejected.verify();
+
+		assertThat(rejected.isVerified()).isTrue();
+		assertThat(rejected.pullDomainEvents()).containsExactly(new NgoVerified(rejected.id(), rejected.accountId()));
 	}
 
 	@Test
